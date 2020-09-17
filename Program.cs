@@ -150,6 +150,8 @@ namespace FileFinder
             Console.Write("> MADE BY: GermanBread#9087 <");
             System.Threading.Thread.Sleep(200);
             Console.Write("> GITHUB PROJECT: https://github.com/GermanBread/FileFinderGit <");
+            System.Threading.Thread.Sleep(200);
+            Console.Write("> STARTING <");
             System.Threading.Thread.Sleep(1000);
 
             /////////////////////////////////////////
