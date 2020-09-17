@@ -1,0 +1,180 @@
+/home/mathisj/Schreibtisch/FileFinder/bin/Debug/netcoreapp3.1/FileFinder
+/home/mathisj/Schreibtisch/FileFinder/bin/Debug/netcoreapp3.1/FileFinder.deps.json
+/home/mathisj/Schreibtisch/FileFinder/bin/Debug/netcoreapp3.1/FileFinder.runtimeconfig.json
+/home/mathisj/Schreibtisch/FileFinder/bin/Debug/netcoreapp3.1/FileFinder.runtimeconfig.dev.json
+/home/mathisj/Schreibtisch/FileFinder/bin/Debug/netcoreapp3.1/FileFinder.dll
+/home/mathisj/Schreibtisch/FileFinder/bin/Debug/netcoreapp3.1/FileFinder.pdb
+/home/mathisj/Schreibtisch/FileFinder/obj/Debug/netcoreapp3.1/FileFinder.csprojAssemblyReference.cache
+/home/mathisj/Schreibtisch/FileFinder/obj/Debug/netcoreapp3.1/FileFinder.AssemblyInfoInputs.cache
+/home/mathisj/Schreibtisch/FileFinder/obj/Debug/netcoreapp3.1/FileFinder.AssemblyInfo.cs
+/home/mathisj/Schreibtisch/FileFinder/obj/Debug/netcoreapp3.1/FileFinder.dll
+/home/mathisj/Schreibtisch/FileFinder/obj/Debug/netcoreapp3.1/FileFinder.pdb
+/home/mathisj/Schreibtisch/FileFinder/FileFinder/FileFinder
+/home/mathisj/Schreibtisch/FileFinder/FileFinder/FileFinder.deps.json
+/home/mathisj/Schreibtisch/FileFinder/FileFinder/FileFinder.runtimeconfig.json
+/home/mathisj/Schreibtisch/FileFinder/FileFinder/FileFinder.runtimeconfig.dev.json
+/home/mathisj/Schreibtisch/FileFinder/FileFinder/FileFinder.dll
+/home/mathisj/Schreibtisch/FileFinder/FileFinder/FileFinder.pdb
+/home/mathisj/Schreibtisch/FileFinder/FileFinder Linux v1.0/FileFinder
+/home/mathisj/Schreibtisch/FileFinder/FileFinder Linux v1.0/FileFinder.deps.json
+/home/mathisj/Schreibtisch/FileFinder/FileFinder Linux v1.0/FileFinder.runtimeconfig.json
+/home/mathisj/Schreibtisch/FileFinder/FileFinder Linux v1.0/FileFinder.runtimeconfig.dev.json
+/home/mathisj/Schreibtisch/FileFinder/FileFinder Linux v1.0/FileFinder.dll
+/home/mathisj/Schreibtisch/FileFinder/FileFinder Linux v1.0/FileFinder.pdb
+/home/mathisj/Schreibtisch/FileFinder/FileFinder Linux v1.2/FileFinder
+/home/mathisj/Schreibtisch/FileFinder/FileFinder Linux v1.2/FileFinder.deps.json
+/home/mathisj/Schreibtisch/FileFinder/FileFinder Linux v1.2/FileFinder.runtimeconfig.json
+/home/mathisj/Schreibtisch/FileFinder/FileFinder Linux v1.2/FileFinder.runtimeconfig.dev.json
+/home/mathisj/Schreibtisch/FileFinder/FileFinder Linux v1.2/FileFinder.dll
+/home/mathisj/Schreibtisch/FileFinder/FileFinder Linux v1.2/FileFinder.pdb
+/home/mathisj/Schreibtisch/FileFinder/FileFinder Linux v1.3/FileFinder
+/home/mathisj/Schreibtisch/FileFinder/FileFinder Linux v1.3/FileFinder.deps.json
+/home/mathisj/Schreibtisch/FileFinder/FileFinder Linux v1.3/FileFinder.runtimeconfig.json
+/home/mathisj/Schreibtisch/FileFinder/FileFinder Linux v1.3/FileFinder.runtimeconfig.dev.json
+/home/mathisj/Schreibtisch/FileFinder/FileFinder Linux v1.3/FileFinder.dll
+/home/mathisj/Schreibtisch/FileFinder/FileFinder Linux v1.3/FileFinder.pdb
+/home/mathisj/Schreibtisch/FileFinder/FileFinder Linux v1.3/MetadataExtractor.dll
+/home/mathisj/Schreibtisch/FileFinder/FileFinder Linux v1.3/XmpCore.dll
+/home/mathisj/Schreibtisch/FileFinder/obj/Debug/netcoreapp3.1/FileFinder.csproj.CopyComplete
+/home/mathisj/Schreibtisch/FileFinder/bin/Debug/netcoreapp3.1/MetadataExtractor.dll
+/home/mathisj/Schreibtisch/FileFinder/bin/Debug/netcoreapp3.1/XmpCore.dll
+/home/mathisj/Schreibtisch/FileFinder/FileFinder Linux v1.3.5/FileFinder
+/home/mathisj/Schreibtisch/FileFinder/FileFinder Linux v1.3.5/FileFinder.deps.json
+/home/mathisj/Schreibtisch/FileFinder/FileFinder Linux v1.3.5/FileFinder.runtimeconfig.json
+/home/mathisj/Schreibtisch/FileFinder/FileFinder Linux v1.3.5/FileFinder.runtimeconfig.dev.json
+/home/mathisj/Schreibtisch/FileFinder/FileFinder Linux v1.3.5/FileFinder.dll
+/home/mathisj/Schreibtisch/FileFinder/FileFinder Linux v1.3.5/FileFinder.pdb
+/home/mathisj/Schreibtisch/FileFinder/FileFinder Linux v1.3.5/MetadataExtractor.dll
+/home/mathisj/Schreibtisch/FileFinder/FileFinder Linux v1.3.5/XmpCore.dll
+/home/mathisj/Schreibtisch/FileFinder/FileFinder Linux v1.3.6/FileFinder
+/home/mathisj/Schreibtisch/FileFinder/FileFinder Linux v1.3.6/FileFinder.deps.json
+/home/mathisj/Schreibtisch/FileFinder/FileFinder Linux v1.3.6/FileFinder.runtimeconfig.json
+/home/mathisj/Schreibtisch/FileFinder/FileFinder Linux v1.3.6/FileFinder.runtimeconfig.dev.json
+/home/mathisj/Schreibtisch/FileFinder/FileFinder Linux v1.3.6/FileFinder.dll
+/home/mathisj/Schreibtisch/FileFinder/FileFinder Linux v1.3.6/FileFinder.pdb
+/home/mathisj/Schreibtisch/FileFinder/FileFinder Linux v1.3.6/MetadataExtractor.dll
+/home/mathisj/Schreibtisch/FileFinder/FileFinder Linux v1.3.6/XmpCore.dll
+/home/mathisj/Schreibtisch/FileFinder/FileFinder Linux v1.3.7/FileFinder
+/home/mathisj/Schreibtisch/FileFinder/FileFinder Linux v1.3.7/FileFinder.deps.json
+/home/mathisj/Schreibtisch/FileFinder/FileFinder Linux v1.3.7/FileFinder.runtimeconfig.json
+/home/mathisj/Schreibtisch/FileFinder/FileFinder Linux v1.3.7/FileFinder.runtimeconfig.dev.json
+/home/mathisj/Schreibtisch/FileFinder/FileFinder Linux v1.3.7/FileFinder.dll
+/home/mathisj/Schreibtisch/FileFinder/FileFinder Linux v1.3.7/FileFinder.pdb
+/home/mathisj/Schreibtisch/FileFinder/FileFinder Linux v1.3.7/MetadataExtractor.dll
+/home/mathisj/Schreibtisch/FileFinder/FileFinder Linux v1.3.7/XmpCore.dll
+/home/mathisj/Schreibtisch/FileFinder/FileFinder Linux v1.3.8/FileFinder
+/home/mathisj/Schreibtisch/FileFinder/FileFinder Linux v1.3.8/FileFinder.deps.json
+/home/mathisj/Schreibtisch/FileFinder/FileFinder Linux v1.3.8/FileFinder.runtimeconfig.json
+/home/mathisj/Schreibtisch/FileFinder/FileFinder Linux v1.3.8/FileFinder.runtimeconfig.dev.json
+/home/mathisj/Schreibtisch/FileFinder/FileFinder Linux v1.3.8/FileFinder.dll
+/home/mathisj/Schreibtisch/FileFinder/FileFinder Linux v1.3.8/FileFinder.pdb
+/home/mathisj/Schreibtisch/FileFinder/FileFinder Linux v1.3.8/MetadataExtractor.dll
+/home/mathisj/Schreibtisch/FileFinder/FileFinder Linux v1.3.8/XmpCore.dll
+/home/mathisj/Schreibtisch/FileFinder/FileFinder Linux v1.4/FileFinder
+/home/mathisj/Schreibtisch/FileFinder/FileFinder Linux v1.4/FileFinder.deps.json
+/home/mathisj/Schreibtisch/FileFinder/FileFinder Linux v1.4/FileFinder.runtimeconfig.json
+/home/mathisj/Schreibtisch/FileFinder/FileFinder Linux v1.4/FileFinder.runtimeconfig.dev.json
+/home/mathisj/Schreibtisch/FileFinder/FileFinder Linux v1.4/FileFinder.dll
+/home/mathisj/Schreibtisch/FileFinder/FileFinder Linux v1.4/FileFinder.pdb
+/home/mathisj/Schreibtisch/FileFinder/FileFinder Linux v1.4/MetadataExtractor.dll
+/home/mathisj/Schreibtisch/FileFinder/FileFinder Linux v1.4/XmpCore.dll
+/home/mathisj/Schreibtisch/FileFinder/FileFinder Linux v1.4.1/FileFinder
+/home/mathisj/Schreibtisch/FileFinder/FileFinder Linux v1.4.1/FileFinder.deps.json
+/home/mathisj/Schreibtisch/FileFinder/FileFinder Linux v1.4.1/FileFinder.runtimeconfig.json
+/home/mathisj/Schreibtisch/FileFinder/FileFinder Linux v1.4.1/FileFinder.runtimeconfig.dev.json
+/home/mathisj/Schreibtisch/FileFinder/FileFinder Linux v1.4.1/FileFinder.dll
+/home/mathisj/Schreibtisch/FileFinder/FileFinder Linux v1.4.1/FileFinder.pdb
+/home/mathisj/Schreibtisch/FileFinder/FileFinder Linux v1.4.1/MetadataExtractor.dll
+/home/mathisj/Schreibtisch/FileFinder/FileFinder Linux v1.4.1/XmpCore.dll
+/home/mathisj/Schreibtisch/FileFinder/FileFinder Linux v1.4.2/FileFinder
+/home/mathisj/Schreibtisch/FileFinder/FileFinder Linux v1.4.2/FileFinder.deps.json
+/home/mathisj/Schreibtisch/FileFinder/FileFinder Linux v1.4.2/FileFinder.runtimeconfig.json
+/home/mathisj/Schreibtisch/FileFinder/FileFinder Linux v1.4.2/FileFinder.runtimeconfig.dev.json
+/home/mathisj/Schreibtisch/FileFinder/FileFinder Linux v1.4.2/FileFinder.dll
+/home/mathisj/Schreibtisch/FileFinder/FileFinder Linux v1.4.2/FileFinder.pdb
+/home/mathisj/Schreibtisch/FileFinder/FileFinder Linux v1.4.2/MetadataExtractor.dll
+/home/mathisj/Schreibtisch/FileFinder/FileFinder Linux v1.4.2/XmpCore.dll
+/home/mathisj/Schreibtisch/FileFinder/FileFinder Linux v1.4.3/FileFinder
+/home/mathisj/Schreibtisch/FileFinder/FileFinder Linux v1.4.3/FileFinder.deps.json
+/home/mathisj/Schreibtisch/FileFinder/FileFinder Linux v1.4.3/FileFinder.runtimeconfig.json
+/home/mathisj/Schreibtisch/FileFinder/FileFinder Linux v1.4.3/FileFinder.runtimeconfig.dev.json
+/home/mathisj/Schreibtisch/FileFinder/FileFinder Linux v1.4.3/FileFinder.dll
+/home/mathisj/Schreibtisch/FileFinder/FileFinder Linux v1.4.3/FileFinder.pdb
+/home/mathisj/Schreibtisch/FileFinder/FileFinder Linux v1.4.3/MetadataExtractor.dll
+/home/mathisj/Schreibtisch/FileFinder/FileFinder Linux v1.4.3/XmpCore.dll
+/home/mathisj/Schreibtisch/FileFinder/FileFinder Linux v1.4.4/FileFinder
+/home/mathisj/Schreibtisch/FileFinder/FileFinder Linux v1.4.4/FileFinder.deps.json
+/home/mathisj/Schreibtisch/FileFinder/FileFinder Linux v1.4.4/FileFinder.runtimeconfig.json
+/home/mathisj/Schreibtisch/FileFinder/FileFinder Linux v1.4.4/FileFinder.runtimeconfig.dev.json
+/home/mathisj/Schreibtisch/FileFinder/FileFinder Linux v1.4.4/FileFinder.dll
+/home/mathisj/Schreibtisch/FileFinder/FileFinder Linux v1.4.4/FileFinder.pdb
+/home/mathisj/Schreibtisch/FileFinder/FileFinder Linux v1.4.4/MetadataExtractor.dll
+/home/mathisj/Schreibtisch/FileFinder/FileFinder Linux v1.4.4/XmpCore.dll
+/home/mathisj/Schreibtisch/FileFinder/Filefinder Linux v.1.4.4/FileFinder
+/home/mathisj/Schreibtisch/FileFinder/Filefinder Linux v.1.4.4/FileFinder.deps.json
+/home/mathisj/Schreibtisch/FileFinder/Filefinder Linux v.1.4.4/FileFinder.runtimeconfig.json
+/home/mathisj/Schreibtisch/FileFinder/Filefinder Linux v.1.4.4/FileFinder.runtimeconfig.dev.json
+/home/mathisj/Schreibtisch/FileFinder/Filefinder Linux v.1.4.4/FileFinder.dll
+/home/mathisj/Schreibtisch/FileFinder/Filefinder Linux v.1.4.4/FileFinder.pdb
+/home/mathisj/Schreibtisch/FileFinder/Filefinder Linux v.1.4.4/MetadataExtractor.dll
+/home/mathisj/Schreibtisch/FileFinder/Filefinder Linux v.1.4.4/XmpCore.dll
+/home/mathisj/Schreibtisch/FileFinder/FileFinder Linux v1.5/FileFinder
+/home/mathisj/Schreibtisch/FileFinder/FileFinder Linux v1.5/FileFinder.deps.json
+/home/mathisj/Schreibtisch/FileFinder/FileFinder Linux v1.5/FileFinder.runtimeconfig.json
+/home/mathisj/Schreibtisch/FileFinder/FileFinder Linux v1.5/FileFinder.runtimeconfig.dev.json
+/home/mathisj/Schreibtisch/FileFinder/FileFinder Linux v1.5/FileFinder.dll
+/home/mathisj/Schreibtisch/FileFinder/FileFinder Linux v1.5/FileFinder.pdb
+/home/mathisj/Schreibtisch/FileFinder/FileFinder Linux v1.5/MetadataExtractor.dll
+/home/mathisj/Schreibtisch/FileFinder/FileFinder Linux v1.5/XmpCore.dll
+/home/mathisj/Schreibtisch/C# Projekte/FileFinder/bin/Debug/netcoreapp3.1/FileFinder
+/home/mathisj/Schreibtisch/C# Projekte/FileFinder/bin/Debug/netcoreapp3.1/FileFinder.deps.json
+/home/mathisj/Schreibtisch/C# Projekte/FileFinder/bin/Debug/netcoreapp3.1/FileFinder.runtimeconfig.json
+/home/mathisj/Schreibtisch/C# Projekte/FileFinder/bin/Debug/netcoreapp3.1/FileFinder.runtimeconfig.dev.json
+/home/mathisj/Schreibtisch/C# Projekte/FileFinder/bin/Debug/netcoreapp3.1/FileFinder.dll
+/home/mathisj/Schreibtisch/C# Projekte/FileFinder/bin/Debug/netcoreapp3.1/FileFinder.pdb
+/home/mathisj/Schreibtisch/C# Projekte/FileFinder/bin/Debug/netcoreapp3.1/MetadataExtractor.dll
+/home/mathisj/Schreibtisch/C# Projekte/FileFinder/bin/Debug/netcoreapp3.1/XmpCore.dll
+/home/mathisj/Schreibtisch/C# Projekte/FileFinder/obj/Debug/netcoreapp3.1/FileFinder.csprojAssemblyReference.cache
+/home/mathisj/Schreibtisch/C# Projekte/FileFinder/obj/Debug/netcoreapp3.1/FileFinder.AssemblyInfoInputs.cache
+/home/mathisj/Schreibtisch/C# Projekte/FileFinder/obj/Debug/netcoreapp3.1/FileFinder.AssemblyInfo.cs
+/home/mathisj/Schreibtisch/C# Projekte/FileFinder/obj/Debug/netcoreapp3.1/FileFinder.csproj.CopyComplete
+/home/mathisj/Schreibtisch/C# Projekte/FileFinder/obj/Debug/netcoreapp3.1/FileFinder.dll
+/home/mathisj/Schreibtisch/C# Projekte/FileFinder/obj/Debug/netcoreapp3.1/FileFinder.pdb
+/home/mathisj/Schreibtisch/C# Projekte/FileFinder/FileFinder Windows v1.5/FileFinder
+/home/mathisj/Schreibtisch/C# Projekte/FileFinder/FileFinder Windows v1.5/FileFinder.deps.json
+/home/mathisj/Schreibtisch/C# Projekte/FileFinder/FileFinder Windows v1.5/FileFinder.runtimeconfig.json
+/home/mathisj/Schreibtisch/C# Projekte/FileFinder/FileFinder Windows v1.5/FileFinder.runtimeconfig.dev.json
+/home/mathisj/Schreibtisch/C# Projekte/FileFinder/FileFinder Windows v1.5/FileFinder.dll
+/home/mathisj/Schreibtisch/C# Projekte/FileFinder/FileFinder Windows v1.5/FileFinder.pdb
+/home/mathisj/Schreibtisch/C# Projekte/FileFinder/FileFinder Windows v1.5/MetadataExtractor.dll
+/home/mathisj/Schreibtisch/C# Projekte/FileFinder/FileFinder Windows v1.5/XmpCore.dll
+/home/mathisj/Dokumente/C# Projekte/FileFinder - staging/bin/Debug/netcoreapp3.1/FileFinder
+/home/mathisj/Dokumente/C# Projekte/FileFinder - staging/bin/Debug/netcoreapp3.1/FileFinder.deps.json
+/home/mathisj/Dokumente/C# Projekte/FileFinder - staging/bin/Debug/netcoreapp3.1/FileFinder.runtimeconfig.json
+/home/mathisj/Dokumente/C# Projekte/FileFinder - staging/bin/Debug/netcoreapp3.1/FileFinder.runtimeconfig.dev.json
+/home/mathisj/Dokumente/C# Projekte/FileFinder - staging/bin/Debug/netcoreapp3.1/FileFinder.dll
+/home/mathisj/Dokumente/C# Projekte/FileFinder - staging/bin/Debug/netcoreapp3.1/FileFinder.pdb
+/home/mathisj/Dokumente/C# Projekte/FileFinder - staging/bin/Debug/netcoreapp3.1/MetadataExtractor.dll
+/home/mathisj/Dokumente/C# Projekte/FileFinder - staging/bin/Debug/netcoreapp3.1/XmpCore.dll
+/home/mathisj/Dokumente/C# Projekte/FileFinder - staging/obj/Debug/netcoreapp3.1/FileFinder.csprojAssemblyReference.cache
+/home/mathisj/Dokumente/C# Projekte/FileFinder - staging/obj/Debug/netcoreapp3.1/FileFinder.AssemblyInfoInputs.cache
+/home/mathisj/Dokumente/C# Projekte/FileFinder - staging/obj/Debug/netcoreapp3.1/FileFinder.AssemblyInfo.cs
+/home/mathisj/Dokumente/C# Projekte/FileFinder - staging/obj/Debug/netcoreapp3.1/FileFinder.csproj.CopyComplete
+/home/mathisj/Dokumente/C# Projekte/FileFinder - staging/obj/Debug/netcoreapp3.1/FileFinder.dll
+/home/mathisj/Dokumente/C# Projekte/FileFinder - staging/obj/Debug/netcoreapp3.1/FileFinder.pdb
+/home/mathisj/Dokumente/C# Projekte/FileFinder - staging/build/FileFinder
+/home/mathisj/Dokumente/C# Projekte/FileFinder - staging/build/FileFinder.deps.json
+/home/mathisj/Dokumente/C# Projekte/FileFinder - staging/build/FileFinder.runtimeconfig.json
+/home/mathisj/Dokumente/C# Projekte/FileFinder - staging/build/FileFinder.runtimeconfig.dev.json
+/home/mathisj/Dokumente/C# Projekte/FileFinder - staging/build/FileFinder.dll
+/home/mathisj/Dokumente/C# Projekte/FileFinder - staging/build/FileFinder.pdb
+/home/mathisj/Dokumente/C# Projekte/FileFinder - staging/build/MetadataExtractor.dll
+/home/mathisj/Dokumente/C# Projekte/FileFinder - staging/build/XmpCore.dll
+/home/mathisj/Dokumente/C# Projekte/FileFinder - staging/FFLinux/FileFinder
+/home/mathisj/Dokumente/C# Projekte/FileFinder - staging/FFLinux/FileFinder.deps.json
+/home/mathisj/Dokumente/C# Projekte/FileFinder - staging/FFLinux/FileFinder.runtimeconfig.json
+/home/mathisj/Dokumente/C# Projekte/FileFinder - staging/FFLinux/FileFinder.runtimeconfig.dev.json
+/home/mathisj/Dokumente/C# Projekte/FileFinder - staging/FFLinux/FileFinder.dll
+/home/mathisj/Dokumente/C# Projekte/FileFinder - staging/FFLinux/FileFinder.pdb
+/home/mathisj/Dokumente/C# Projekte/FileFinder - staging/FFLinux/MetadataExtractor.dll
+/home/mathisj/Dokumente/C# Projekte/FileFinder - staging/FFLinux/XmpCore.dll

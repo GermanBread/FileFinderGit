@@ -1,0 +1,90 @@
+{
+  "runtimeTarget": {
+    "name": ".NETCoreApp,Version=v3.1/win-x64",
+    "signature": ""
+  },
+  "compilationOptions": {},
+  "targets": {
+    ".NETCoreApp,Version=v3.1": {},
+    ".NETCoreApp,Version=v3.1/win-x64": {
+      "FileFinder/1.0.0": {
+        "dependencies": {
+          "MetadataExtractor": "2.4.3"
+        },
+        "runtime": {
+          "FileFinder.dll": {}
+        }
+      },
+      "MetadataExtractor/2.4.3": {
+        "dependencies": {
+          "System.Text.Encoding.CodePages": "4.5.1",
+          "XmpCore": "6.1.10"
+        },
+        "runtime": {
+          "lib/netstandard2.0/MetadataExtractor.dll": {
+            "assemblyVersion": "2.4.3.0",
+            "fileVersion": "2.4.3.0"
+          }
+        }
+      },
+      "Microsoft.NETCore.Platforms/2.1.2": {},
+      "System.Runtime.CompilerServices.Unsafe/4.5.2": {},
+      "System.Text.Encoding.CodePages/4.5.1": {
+        "dependencies": {
+          "Microsoft.NETCore.Platforms": "2.1.2",
+          "System.Runtime.CompilerServices.Unsafe": "4.5.2"
+        }
+      },
+      "XmpCore/6.1.10": {
+        "runtime": {
+          "lib/netstandard2.0/XmpCore.dll": {
+            "assemblyVersion": "6.1.10.0",
+            "fileVersion": "6.1.10.0"
+          }
+        }
+      }
+    }
+  },
+  "libraries": {
+    "FileFinder/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "MetadataExtractor/2.4.3": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-cqYmGVa6+toDGrX8JEPrkShF5lggwvL4ZZEpwdaq1lJr7/NhiEXm9/USJqJuldG1N8FRY4pLZp/Euf+qBEaqeg==",
+      "path": "metadataextractor/2.4.3",
+      "hashPath": "metadataextractor.2.4.3.nupkg.sha512"
+    },
+    "Microsoft.NETCore.Platforms/2.1.2": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-mOJy3M0UN+LUG21dLGMxaWZEP6xYpQEpLuvuEQBaownaX4YuhH6NmNUlN9si+vNkAS6dwJ//N1O4DmLf2CikVg==",
+      "path": "microsoft.netcore.platforms/2.1.2",
+      "hashPath": "microsoft.netcore.platforms.2.1.2.nupkg.sha512"
+    },
+    "System.Runtime.CompilerServices.Unsafe/4.5.2": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-wprSFgext8cwqymChhrBLu62LMg/1u92bU+VOwyfBimSPVFXtsNqEWC92Pf9ofzJFlk4IHmJA75EDJn1b2goAQ==",
+      "path": "system.runtime.compilerservices.unsafe/4.5.2",
+      "hashPath": "system.runtime.compilerservices.unsafe.4.5.2.nupkg.sha512"
+    },
+    "System.Text.Encoding.CodePages/4.5.1": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-4J2JQXbftjPMppIHJ7IC+VXQ9XfEagN92vZZNoG12i+zReYlim5dMoXFC1Zzg7tsnKDM7JPo5bYfFK4Jheq44w==",
+      "path": "system.text.encoding.codepages/4.5.1",
+      "hashPath": "system.text.encoding.codepages.4.5.1.nupkg.sha512"
+    },
+    "XmpCore/6.1.10": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-ZAcSNzJbvAM8lTVeRFvvAQ3CS/+FDb/IrzvrSjLANIXruw3unul/9yQekS55/1v7jsx5ALJby0iT39kHQv5LSg==",
+      "path": "xmpcore/6.1.10",
+      "hashPath": "xmpcore.6.1.10.nupkg.sha512"
+    }
+  }
+}
