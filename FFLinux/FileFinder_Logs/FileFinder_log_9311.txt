@@ -1,0 +1,11 @@
+FILE LOCATOR & COPIER LOG
+
+===============================
+These arguments were given:
+Set[0] = 
+Set[1] = 
+Set[2] = 2
+Set[3] = 1
+
+===============================
+File finding method: The path is empty. (Parameter 'path')
