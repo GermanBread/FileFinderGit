@@ -143,15 +143,15 @@ namespace FileFinder
 
             //splash screen
             Console.Clear();
-            Console.Write("> FILE FINDER <");
+            Console.WriteLine("[ FILE FINDER ]");
             System.Threading.Thread.Sleep(200);
-            Console.Write("> STAGING BRANCH <");
+            Console.WriteLine("[ STAGING BRANCH ]");
             System.Threading.Thread.Sleep(200);
-            Console.Write("> MADE BY: GermanBread#9087 <");
+            Console.WriteLine("[ MADE BY: GermanBread#9087 ]");
             System.Threading.Thread.Sleep(200);
-            Console.Write("> GITHUB PROJECT: https://github.com/GermanBread/FileFinderGit <");
+            Console.WriteLine("[ GITHUB PROJECT: https://github.com/GermanBread/FileFinderGit ]");
             System.Threading.Thread.Sleep(200);
-            Console.Write("> STARTING <");
+            Console.WriteLine("[ STARTING ]");
             System.Threading.Thread.Sleep(1000);
 
             /////////////////////////////////////////
