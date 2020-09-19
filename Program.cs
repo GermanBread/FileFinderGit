@@ -424,6 +424,7 @@ namespace FileFinder
             foreach (var exceptionName in ExceptionsThrown)
             {
                 logFile.WriteLine(exceptionName.Message);
+                logFile.WriteLine(exceptionName.TargetSite);
             }
             //add spacer
             if (FilePaths.Count > 0 || ExceptionsThrown.Count > 0)
