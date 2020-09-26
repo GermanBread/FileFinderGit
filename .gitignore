@@ -1,3 +1,4 @@
-bin/
-FileFinder_Logs/
+bin
+*Logs/
 obj/
+.vscode/
