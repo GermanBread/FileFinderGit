@@ -13,12 +13,6 @@ namespace FileFinder
         static void Main(string[] args)
         {   
             #region Setup
-            
-            /////////////////////////////////////////
-            /////////////////////////////////////////
-            ////             SETUP              /////
-            /////////////////////////////////////////
-            /////////////////////////////////////////
 
             //variables that don't depend on the settings manager
             char dirNavigationChar = System.Environment.OSVersion.Platform == PlatformID.Win32NT ? '\\' : '/';
@@ -167,12 +161,6 @@ namespace FileFinder
             System.Threading.Thread.Sleep(1000);
 
             #endregion
-
-            /////////////////////////////////////////
-            /////////////////////////////////////////
-            ////         MAIN PROGRAMM          /////
-            /////////////////////////////////////////
-            /////////////////////////////////////////
             
             #region File Finding Phase
             
@@ -235,10 +223,7 @@ namespace FileFinder
             }
 
             List<string> processedFileList = new List<string>();
-            
-            /////////////////////////////////////////
-                        //FILE COPIER//
-            /////////////////////////////////////////
+
             int unsortedCount = 0;
             
             for (int i = 0; i < FilePaths.Count; i++)
@@ -415,12 +400,6 @@ namespace FileFinder
             #endregion
 
             #region Programm Exit
-            
-            /////////////////////////////////////////
-            /////////////////////////////////////////
-            ////         PROGRAMM EXIT           ////
-            /////////////////////////////////////////
-            /////////////////////////////////////////
             
             Console.ForegroundColor = ConsoleColor.Green;
             Console.SetCursorPosition(0, 16);
