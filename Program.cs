@@ -12,6 +12,8 @@ namespace FileFinder
     {
         static void Main(string[] args)
         {   
+            #region Setup
+            
             /////////////////////////////////////////
             /////////////////////////////////////////
             ////             SETUP              /////
@@ -57,6 +59,10 @@ namespace FileFinder
             bool SortingEnabled = settingsMenu.settings[4].IntSelection == 1;
             int OverwriteType = settingsMenu.settings[5].IntSelection;
             bool CreateTargetDir = settingsMenu.settings[6].IntSelection == 1;
+
+            #endregion
+
+            #region Program Init
             
             //initialize the console
             Console.CursorVisible = false;
@@ -124,6 +130,10 @@ namespace FileFinder
                 return;
             }
             */
+
+            #endregion
+
+            #region Splash and Log init
             
             //write to file
             logFile.WriteLine("FILE LOCATOR & COPIER LOG");
@@ -156,11 +166,15 @@ namespace FileFinder
             Console.ResetColor();
             System.Threading.Thread.Sleep(1000);
 
+            #endregion
+
             /////////////////////////////////////////
             /////////////////////////////////////////
             ////         MAIN PROGRAMM          /////
             /////////////////////////////////////////
             /////////////////////////////////////////
+            
+            #region File Finding Phase
             
             Console.Clear();
             Console.SetCursorPosition(0, 0);
@@ -206,8 +220,12 @@ namespace FileFinder
 
             foreach (var item in FilePaths)
             {
-                logFile.WriteLine("Found \"" + IsolateFilename(item) + "." + IsolateFileextension(item) + "\"");
+                logFile.WriteLine("Found \"" + IsolateFilename(item) + "." + IsolateFileExtension(item) + "\"");
             }
+
+            #endregion
+
+            #region File Copying Phase
 
             if (FilePaths.Count > 0)
             {
@@ -269,22 +287,22 @@ namespace FileFinder
                 string destpath;
                 string filename;
                 Func<bool, string> returnIterator = x => x ? i.ToString() : "";
-                Func<string, string> addDirNavChar = x => x[x.Length - 1] != dirNavigationChar ? dirNavigationChar.ToString() : "";
+                Func<string, string> addDirNavCharIfNotInName = x => x[x.Length - 1] != dirNavigationChar ? dirNavigationChar.ToString() : "";
                 if (fileShotTime.Take(4).All(c => c >= '0' && c <= '9'))
                 {
                     //this will execute when the date-format is yyyy:mm:dd-hh:MM:ss
                     if (FileNameType > 0)
                     {
-                        destpath = TargetPath + addDirNavChar(TargetPath) + (SortingEnabled ? new string(fileShotTime.Take(4).ToArray()) + "_" + new string(fileShotTime.Skip(5).Take(2).ToArray()) + dirNavigationChar : "");
+                        destpath = TargetPath + addDirNavCharIfNotInName(TargetPath) + (SortingEnabled ? new string(fileShotTime.Take(4).ToArray()) + "_" + new string(fileShotTime.Skip(5).Take(2).ToArray()) + dirNavigationChar : "");
 
                         filename = new string(fileShotTime.Take(4).ToArray()) + "_" + new string(fileShotTime.Skip(5).Take(2).ToArray()) + "_" 
                         + new string(fileShotTime.Skip(8).Take(2).ToArray()) + "-" + new string(fileShotTime.Skip(11).Take(2).ToArray()) + "+" + new string(fileShotTime.Skip(14).Take(2).ToArray())
-                        + "+" + new string(fileShotTime.Skip(17).Take(2).ToArray()) + "-" + IsolateFilename(FilePaths[i]) + returnIterator(FileNameType == 2) + "." + IsolateFileextension(FilePaths[i]).ToLower();
+                        + "+" + new string(fileShotTime.Skip(17).Take(2).ToArray()) + "-" + IsolateFilename(FilePaths[i]) + returnIterator(FileNameType == 2) + "." + IsolateFileExtension(FilePaths[i]).ToLower();
                     }
                     else
                     {
-                        destpath = TargetPath + addDirNavChar(TargetPath) + (SortingEnabled ? new string(fileShotTime.Take(4).ToArray()) + "_" + new string(fileShotTime.Skip(5).Take(2).ToArray()) + dirNavigationChar : "");
-                        filename = IsolateFilename(FilePaths[i]) + "." + IsolateFileextension(FilePaths[i]);
+                        destpath = TargetPath + addDirNavCharIfNotInName(TargetPath) + (SortingEnabled ? new string(fileShotTime.Take(4).ToArray()) + "_" + new string(fileShotTime.Skip(5).Take(2).ToArray()) + dirNavigationChar : "");
+                        filename = IsolateFilename(FilePaths[i]) + "." + IsolateFileExtension(FilePaths[i]);
                     }
                 }
                 else
@@ -292,16 +310,16 @@ namespace FileFinder
                     //this will execute when the date-format is dd:mm:yyyy-hh:MM:ss
                     if (FileNameType > 0)
                     {
-                        destpath = TargetPath + addDirNavChar(TargetPath) + (SortingEnabled ? new string(fileShotTime.Skip(6).Take(4).ToArray()) + "_" + new string(fileShotTime.Skip(3).Take(2).ToArray()) + dirNavigationChar : "");
+                        destpath = TargetPath + addDirNavCharIfNotInName(TargetPath) + (SortingEnabled ? new string(fileShotTime.Skip(6).Take(4).ToArray()) + "_" + new string(fileShotTime.Skip(3).Take(2).ToArray()) + dirNavigationChar : "");
 
                         filename = new string(fileShotTime.Skip(6).Take(4).ToArray()) + "_" + new string(fileShotTime.Skip(3).Take(2).ToArray()) + "_" 
                         + new string(fileShotTime.Take(2).ToArray()) + "-" + new string(fileShotTime.Skip(11).Take(2).ToArray()) + "+" + new string(fileShotTime.Skip(14).Take(2).ToArray())
-                        + "+" + new string(fileShotTime.Skip(17).Take(2).ToArray()) + "-" + IsolateFilename(FilePaths[i]) + returnIterator(FileNameType == 2) + "." + IsolateFileextension(FilePaths[i]).ToLower();
+                        + "+" + new string(fileShotTime.Skip(17).Take(2).ToArray()) + "-" + IsolateFilename(FilePaths[i]) + returnIterator(FileNameType == 2) + "." + IsolateFileExtension(FilePaths[i]).ToLower();
                     }
                     else
                     {
-                        destpath = TargetPath + addDirNavChar(TargetPath) + (SortingEnabled ? new string(fileShotTime.Skip(6).Take(4).ToArray()) + "_" + new string(fileShotTime.Skip(3).Take(2).ToArray()) + dirNavigationChar : "");
-                        filename = IsolateFilename(FilePaths[i]) + "." + IsolateFileextension(FilePaths[i]);
+                        destpath = TargetPath + addDirNavCharIfNotInName(TargetPath) + (SortingEnabled ? new string(fileShotTime.Skip(6).Take(4).ToArray()) + "_" + new string(fileShotTime.Skip(3).Take(2).ToArray()) + dirNavigationChar : "");
+                        filename = IsolateFilename(FilePaths[i]) + "." + IsolateFileExtension(FilePaths[i]);
                     }
                 }
                 
@@ -323,7 +341,7 @@ namespace FileFinder
                         Console.SetCursorPosition(0, Console.CursorTop);
                         Console.WriteLine("Copying file                                          ");
                         Console.ResetColor();
-                        processedFileList.Insert(0, "Copied \"" + IsolateFilename(FilePaths[i]) + "." + IsolateFileextension(FilePaths[i]) + "\"                                       ");                        
+                        processedFileList.Insert(0, "Copied \"" + IsolateFilename(FilePaths[i]) + "." + IsolateFileExtension(FilePaths[i]) + "\"                                       ");                        
                     }
                     else
                     {
@@ -349,19 +367,19 @@ namespace FileFinder
                             }
                             Console.WriteLine("Overwriting duplicate file                                  ");
 
-                            processedFileList.Insert(0, "Overwritten \"" + IsolateFilename(FilePaths[i]) + "." + IsolateFileextension(FilePaths[i]) + "\"                                      ");
+                            processedFileList.Insert(0, "Overwritten \"" + IsolateFilename(FilePaths[i]) + "." + IsolateFileExtension(FilePaths[i]) + "\"                                      ");
                         }
                         else if (OverwriteType == 0)
                         {
                             //this will execute when OVERWRITE equals FALSE a.k.a. when the user wants to keep the files
                             logFile.WriteLine("INFO: User told me not to touch existing files!");
-                            processedFileList.Insert(0, "Kept \"" + IsolateFilename(FilePaths[i]) + "." + IsolateFileextension(FilePaths[i]) + "\"                                      ");
+                            processedFileList.Insert(0, "Kept \"" + IsolateFilename(FilePaths[i]) + "." + IsolateFileExtension(FilePaths[i]) + "\"                                      ");
                         }
                         else
                         {
                             //this will execute when the file in the source folder is older than the file in the target folder
                             logFile.WriteLine("INFO: Kept \"" + copypath + "\"");
-                            processedFileList.Insert(0, "Kept \"" + IsolateFilename(FilePaths[i]) + "." + IsolateFileextension(FilePaths[i]) + "\"                                      ");
+                            processedFileList.Insert(0, "Kept \"" + IsolateFilename(FilePaths[i]) + "." + IsolateFileExtension(FilePaths[i]) + "\"                                      ");
                         }
                     }
                 } catch (Exception caughtException) {
@@ -380,7 +398,7 @@ namespace FileFinder
                     processedFileList.RemoveAt(processedFileList.Count - 1);
                 }
 
-                //this just shows a  list to the user, telling them WHAT this programm is doing
+                //this just shows a list to the user, telling them WHAT this programm is doing
                 Console.SetCursorPosition(0, 7);
                 Console.WriteLine("LOG:");
 
@@ -394,13 +412,16 @@ namespace FileFinder
                 Console.ResetColor();
             }
 
+            #endregion
+
+            #region Programm Exit
+            
             /////////////////////////////////////////
             /////////////////////////////////////////
             ////         PROGRAMM EXIT           ////
             /////////////////////////////////////////
             /////////////////////////////////////////
-
-
+            
             Console.ForegroundColor = ConsoleColor.Green;
             Console.SetCursorPosition(0, 16);
             Console.WriteLine("Done");
@@ -439,7 +460,11 @@ namespace FileFinder
             //close the stream
             logFile.Close();
             Console.CursorVisible = true;
+
+            #endregion
         }
+        
+        #region Program Methods
         static string BarGraph(int value, int maxValue, int width)
         {
             string output = "";
@@ -476,7 +501,7 @@ namespace FileFinder
             return ReverseString(filename);
         }
 
-        static string IsolateFileextension(string path)
+        static string IsolateFileExtension(string path)
         {
             string filename = "";
 
@@ -497,5 +522,7 @@ namespace FileFinder
             Array.Reverse(charArray);
             return new string(charArray);
         }
+
+        #endregion
     }
 }
