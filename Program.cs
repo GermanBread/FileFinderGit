@@ -192,6 +192,7 @@ namespace FileFinder
                 Console.ResetColor();
                 logFile.WriteLine("File finding method: " + caughtException.Message);
                 logFile.Close();
+                Console.CursorVisible = true;
                 return;
             }
 
