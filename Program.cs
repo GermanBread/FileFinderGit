@@ -14,6 +14,12 @@ namespace FileFinder
         {   
             #region Program Setup
 
+            //Exit if the programm isn't running in a console window!
+            if (Console.WindowHeight == 0 && Console.WindowWidth == 0)
+            {
+                return;
+            }
+            
             Console.CursorVisible = false;
             Console.WriteLine("If you don't see a menu appear, restart the app.");
             
