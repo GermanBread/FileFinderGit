@@ -29,12 +29,10 @@ do
         printf "2 - Linux (ARM-32)\n"
         printf "3 - Linux (ARM-64)\n";
         printf "WINDOWS:\n";
-        printf "4 - Windows 10 (x86-64)\n";
-        printf "5 - Windows 10 (x86-32)\n";
-        printf "6 - Windows 10 (ARM-64)\n";
-        printf "7 - Windows 10 (ARM 32)\n";
-        printf "8 - Windows 7 (x86-64)\n";
-        printf "9 - Windows 7 (x86-32)\n";
+        printf "4 - Windows (x86-64)\n";
+        printf "5 - Windows (x86-32)\n";
+        printf "6 - Windows (ARM-64)\n";
+        printf "7 - Windows (ARM 32)\n";
         printf "\n";
     fi
 done
@@ -64,32 +62,22 @@ case $selection in
     
     4)
     printf "$(tput setaf 6)Publishing for Windows 10 (x86-64)$(tput sgr0)\n";
-    compile -r win10-x64;
+    compile -r win-x64;
     ;;
 
     5)
     printf "$(tput setaf 6)Publishing for Windows 10 (x86-32)$(tput sgr0)\n";
-    compile -r win10-x86;
+    compile -r win-x86;
     ;;
 
     6)
     printf "$(tput setaf 6)Publishing for Windows 10 (ARM-64)$(tput sgr0)\n";
-    compile -r win10-arm64;
+    compile -r win-arm64;
     ;;
 
     7)
     printf "$(tput setaf 6)Publishing for Windows 10 (ARM 32)$(tput sgr0)\n";
-    compile -r win10-arm;
-    ;;
-
-    8)
-    printf "$(tput setaf 6)Publishing for Windows 7 (x86-64)$(tput sgr0)\n";
-    compile -r win7-x64;
-    ;;
-
-    9)
-    printf "$(tput setaf 6)Publishing for Windows 7 (x86-32)$(tput sgr0)\n";
-    compile -r win7-x86;
+    compile -r win-arm;
     ;;
 
     #This should only run if the user entered an invalid number...
