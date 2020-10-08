@@ -12,7 +12,7 @@ namespace FileFinder
     {
         static void Main(string[] args)
         {   
-            #region Setup
+            #region Program Setup
 
             Console.CursorVisible = false;
             Console.WriteLine("If you don't see a menu appear, restart the app.");
@@ -21,11 +21,6 @@ namespace FileFinder
             char dirNavigationChar = System.Environment.OSVersion.Platform == PlatformID.Win32NT ? '\\' : '/';
             string LogFileName = "FileFinder_log_" + new Random().Next(1111, 9999).ToString() + ".txt";
             List<Exception> ExceptionsThrown = new List<Exception>();
-            if (!Directory.Exists("." + dirNavigationChar + "FileFinder_Logs"))
-            {
-                Directory.CreateDirectory("." + dirNavigationChar + "FileFinder_Logs");
-            }
-            StreamWriter logFile = new StreamWriter("." + dirNavigationChar + "FileFinder_Logs" + dirNavigationChar + LogFileName);
 
             //Settings manager is called here
             SettingsUI settingsMenu = new SettingsUI();
@@ -59,14 +54,53 @@ namespace FileFinder
 
             #endregion
 
-            #region Program Init
+            #region Phases Init
+
+            //create log directory
+            try 
+            {
+                if (!Directory.Exists("." + dirNavigationChar + "FileFinder_Logs"))
+                {
+                    Directory.CreateDirectory("." + dirNavigationChar + "FileFinder_Logs");
+                }
+            } 
+            catch 
+            {
+                Console.WriteLine("Logdir creation: The programm encountered a severe error and cannot continue.");
+                Console.CursorVisible = true;
+                return;
+            }
             
+            //create log file
+            StreamWriter logFile;
+            try 
+            {
+                logFile = new StreamWriter("." + dirNavigationChar + "FileFinder_Logs" + dirNavigationChar + LogFileName);
+            } 
+            catch (IOException ioException) 
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("Logfile creation: Whoops, looks like something went wrong when creating a log file! Trying again!");
+                Console.ResetColor();
+                ExceptionsThrown.Add(ioException);
+                try 
+                {
+                    logFile = new StreamWriter("." + dirNavigationChar + "FileFinder_Logs" + dirNavigationChar + LogFileName + new Random().Next(0, 9));   
+                } 
+                catch 
+                {
+                    Console.WriteLine("Logfile creation: The programm encountered a severe error and cannot continue.");
+                    Console.CursorVisible = true;
+                    return;
+                }
+            }
+
             //initialize the console ... again (just in case)
             Console.CursorVisible = false;
             Console.Clear();
             Console.SetCursorPosition(0, 0);
 
-            //check if the path is valid
+            //check if the path is valid (obsolete?)
             /*
             if (File.Exists(Path))
             {
@@ -92,15 +126,13 @@ namespace FileFinder
                 Console.CursorVisible = true;
                 return;
             }
-            */
 
             //create a directory before the check
-            if (CreateTargetDir /* whether or not to create a directory */ && !Directory.Exists(TargetPath) /* check if the path is not a file */ && !File.Exists(TargetPath))
+            if (CreateTargetDir && !Directory.Exists(TargetPath) && !File.Exists(TargetPath))
             {
                 Directory.CreateDirectory(TargetPath);
             }
-
-            /*
+            
             //check if the target path is valid
             if (File.Exists(TargetPath))
             {
@@ -127,10 +159,6 @@ namespace FileFinder
                 return;
             }
             */
-
-            #endregion
-
-            #region Splash and Log init
             
             //write to file
             logFile.WriteLine("FILE LOCATOR & COPIER LOG");
