@@ -7,12 +7,10 @@ printf "1 - Linux (x86-64)\n";
 printf "2 - Linux (ARM-64)\n"
 printf "3 - Linux (ARM-32)\n";
 printf "WINDOWS:\n";
-printf "4 - Windows 10 (x86-64)\n";
-printf "5 - Windows 10 (x86-32)\n";
-printf "6 - Windows 10 (ARM-64)\n";
-printf "7 - Windows 10 (ARM 32)\n";
-printf "8 - Windows 7 (x86-64)\n";
-printf "9 - Windows 7 (x86-32)\n";
+printf "4 - Windows (x86-64)\n";
+printf "5 - Windows (x86-32)\n";
+printf "6 - Windows (ARM-64)\n";
+printf "7 - Windows (ARM 32)\n";
 printf "\n";
 
 #Repeat only if the user hasn't entered an integer...
