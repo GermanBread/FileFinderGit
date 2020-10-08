@@ -12,7 +12,7 @@ TBC
 
 Linux: 
 In terminal run: `git clone https://github.com/GermanBread/FileFinderGit`.
-Then, cd into the "FileFinderGit" folder and run `dotnet build -o ./FileFinder`.
+Then, cd into the "FileFinderGit" folder and execute `./build\ script.sh`, select a runtime and wait for it to compile!
 
 ## To launch the app:
 
