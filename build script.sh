@@ -39,7 +39,7 @@ done
 shopt -s expand_aliases
 
 #Alias "compile" to the command below to make the code look cleaner.
-alias compile="dotnet publish -v n -p:PublishSingleFile=true -p:PublishTrimmed=true -o ./build";
+alias compile="dotnet publish -v n -p:PublishSingleFile=true -p:PublishTrimmed=true -o build";
 
 #The user has sucessfully selected a runtime, now compile it.
 case $selection in
@@ -86,6 +86,9 @@ esac
 
 #I put this unalias-command here just in case. Is this even necessary?
 unalias compile;
+
+#remove debug files
+rm build/FileFinder.pdb
 
 #Exit the script
 exit;
