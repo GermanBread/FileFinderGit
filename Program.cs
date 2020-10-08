@@ -14,6 +14,9 @@ namespace FileFinder
         {   
             #region Setup
 
+            Console.CursorVisible = false;
+            Console.WriteLine("If you don't see a menu appear, restart the app.");
+            
             //variables that don't depend on the settings manager
             char dirNavigationChar = System.Environment.OSVersion.Platform == PlatformID.Win32NT ? '\\' : '/';
             string LogFileName = "FileFinder_log_" + new Random().Next(1111, 9999).ToString() + ".txt";
@@ -29,8 +32,8 @@ namespace FileFinder
 
             //add menu entries
             //settingsMenu.settings.Add(new SettingsEntry("Paths", SettingsEntry.InteractionType.nonSelectableAndNonInteractable, new List<string>() { "" }, 0));
-            settingsMenu.settings.Add(new SettingsEntry("Source path", SettingsEntry.InteractionType.selectableAndInteractable, new List<string>() { "$Path", "" }, 0));
-            settingsMenu.settings.Add(new SettingsEntry("Target path", SettingsEntry.InteractionType.selectableAndInteractable, new List<string>() { "$Path", "" }, 0));
+            settingsMenu.settings.Add(new SettingsEntry("Source path", SettingsEntry.InteractionType.selectableAndInteractable, new List<string>() { "$Path", ""}, 0, "Path to the files you want sorted i.e. \"Family_pictures\""));
+            settingsMenu.settings.Add(new SettingsEntry("Destination path", SettingsEntry.InteractionType.selectableAndInteractable, new List<string>() { "$Path", "" }, 0, "Path to the destination folder i.e. \"Family_pictures_sorted\""));
             //settingsMenu.settings.Add(new SettingsEntry("Testpath", SettingsEntry.InteractionType.selectableAndInteractable, new List<string>() { "$Input", "" }, 0));
             
             settingsMenu.settings.Add(new SettingsEntry("", SettingsEntry.InteractionType.nonSelectableAndNonInteractable, new List<string>() { "" }, 0));
@@ -58,7 +61,7 @@ namespace FileFinder
 
             #region Program Init
             
-            //initialize the console
+            //initialize the console ... again (just in case)
             Console.CursorVisible = false;
             Console.Clear();
             Console.SetCursorPosition(0, 0);
@@ -149,7 +152,7 @@ namespace FileFinder
             Console.Clear();
             Console.WriteLine("[ FILE FINDER ]");
             System.Threading.Thread.Sleep(500);
-            Console.WriteLine("[ STAGING BRANCH ]");
+            Console.WriteLine("[ STABLE BRANCH ]");
             System.Threading.Thread.Sleep(500);
             Console.WriteLine("[ MADE BY: GermanBread#9087 ]");
             System.Threading.Thread.Sleep(500);

@@ -17,12 +17,14 @@ namespace User_Interface
         public List<string> StrValueLabels { get; private set; }
         public int IntSelection { get; set; }
         public InteractionType EnumInteractable { get; private set; }
-        public SettingsEntry(string Label, InteractionType Interactable, List<string> ValueLabels, int DefaultSelection)
+        public string StrDescription { get; private set; }
+        public SettingsEntry(string Label, InteractionType Interactable, List<string> ValueLabels, int DefaultSelection, string Description = null)
         {
             StrLabel = Label;
             StrValueLabels = ValueLabels;
             IntSelection = DefaultSelection;
             EnumInteractable = Interactable;
+            StrDescription = Description;
         }
     }
     
@@ -90,42 +92,50 @@ namespace User_Interface
                     //statement for handling "buttons"
                     if (settingsElement.StrValueLabels[0] == "$Done")
                     {
-                        Console.WriteLine("<Done>");
+                        Console.Write("<Done>");
                     }
                     else if (settingsElement.StrValueLabels[0] == "$Input")
                     {
                         if (settingsElement.StrValueLabels[1].Length > 0)
                         {
-                            Console.WriteLine("<" + settingsElement.StrValueLabels[1].ToString() + ">");
+                            Console.Write("<" + settingsElement.StrValueLabels[1].ToString() + ">");
                         }
                         else
                         {
-                            Console.WriteLine("<Text field>");   
+                            Console.Write("<Text field>");
                         }
                     }
                     else if (settingsElement.StrValueLabels[0] == "$Path")
                     {
                         if (settingsElement.StrValueLabels[1].Length > 0)
                         {
-                            Console.WriteLine("<" + settingsElement.StrValueLabels[1].ToString() + ">");
+                            Console.Write("<" + settingsElement.StrValueLabels[1].ToString() + ">");
                         }
                         else
                         {
-                            Console.WriteLine("<Select path>");   
+                            Console.Write("<Select path>");
                         }
                     }
                     else
                     {
-                        Console.WriteLine("<" + settingsElement.StrValueLabels[settingsElement.IntSelection].ToString() + ">");   
+                        Console.Write("<" + settingsElement.StrValueLabels[settingsElement.IntSelection].ToString() + ">");
                     }
                 }
                 else
                 {
-                    Console.WriteLine(settingsElement.StrValueLabels[settingsElement.IntSelection].ToString());   
+                    Console.Write(settingsElement.StrValueLabels[settingsElement.IntSelection].ToString());
                 }
                 
                 //reset the color even if the setting was not highlighted
                 Console.ResetColor();
+                
+                //show description of selected element
+                if (settingsElement.StrDescription != null && settingsElement == settings[selectedSetting])
+                {
+                    Console.ForegroundColor = ConsoleColor.DarkGray;
+                    Console.WriteLine(" Description: " + settingsElement.StrDescription);
+                    Console.ResetColor();
+                }
             }
 
             //catch keystroke
