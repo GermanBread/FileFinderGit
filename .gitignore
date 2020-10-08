@@ -2,3 +2,4 @@ bin
 *Logs/
 obj/
 .vscode/
+build/
