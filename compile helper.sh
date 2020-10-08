@@ -1,5 +1,10 @@
 #!/bin/bash
 
+#quit if the script is not run in a terminal
+if [[ $TERM == dumb ]]; then
+    exit;
+fi
+
 #Rundown of the available runtimes (I could've made an array, oh well)
 printf "Please select runtime$(tput sgr0)\n";
 printf "LINUX:\n";
