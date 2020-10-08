@@ -12,7 +12,7 @@ TBC
 
 Linux: 
 In terminal run: `git clone https://github.com/GermanBread/FileFinderGit`.
-Then, cd into the "FileFinderGit" folder and execute `./build\ script.sh`, select a runtime and wait for it to compile!
+Then cd into the "FileFinderGit" folder, execute `./build\ script.sh`, select a runtime and wait for it to compile!
 
 ## To launch the app:
 
