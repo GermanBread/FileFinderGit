@@ -93,7 +93,7 @@ esac
 unalias compile;
 
 #remove debug files
-rm -f build/FileFinder.pdb
+rm -f build/*.pdb
 
 #Exit the script
 exit;
