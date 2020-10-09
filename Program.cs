@@ -1,9 +1,9 @@
 ﻿using System;
 using System.IO;
 using System.Collections.Generic;
+using System.Linq;
 using MetadataExtractor.Formats.Exif;
 using MetadataExtractor.Formats.Xmp;
-using System.Linq;
 using User_Interface;
 
 namespace FileFinder
@@ -11,191 +11,225 @@ namespace FileFinder
     class Program
     {
         static void Main(string[] args)
-        {   
+        {             
             #region Program Setup
 
-            //Exit if the programm isn't running in a console window!
-            if (Console.WindowHeight == 0 && Console.WindowWidth == 0)
-            {
-                return;
-            }
-            
-            Console.CursorVisible = false;
-            Console.WriteLine("If you don't see a menu appear, restart the app.");
-            
-            //variables that don't depend on the settings manager
-            char dirNavigationChar = System.Environment.OSVersion.Platform == PlatformID.Win32NT ? '\\' : '/';
-            string LogFileName = "FileFinder_log_" + new Random().Next(1111, 9999).ToString() + ".txt";
-            List<Exception> ExceptionsThrown = new List<Exception>();
+                #region Failsafe
+                
+                //Exit if the programm isn't running in a console window!
+                if (Console.WindowHeight == 0 && Console.WindowWidth == 0)
+                {
+                    return;
+                }
 
-            //Settings manager is called here
-            SettingsUI settingsMenu = new SettingsUI();
+                #endregion
 
-            //add menu entries
-            //settingsMenu.settings.Add(new SettingsEntry("Paths", SettingsEntry.InteractionType.nonSelectableAndNonInteractable, new List<string>() { "" }, 0));
-            settingsMenu.settings.Add(new SettingsEntry("Source path", SettingsEntry.InteractionType.selectableAndInteractable, new List<string>() { "$Path", ""}, 0, "Path to the files you want sorted i.e. \"Family_pictures\""));
-            settingsMenu.settings.Add(new SettingsEntry("Destination path", SettingsEntry.InteractionType.selectableAndInteractable, new List<string>() { "$Path", "" }, 0, "Path to the destination folder i.e. \"Family_pictures_sorted\""));
-            //settingsMenu.settings.Add(new SettingsEntry("Testpath", SettingsEntry.InteractionType.selectableAndInteractable, new List<string>() { "$Input", "" }, 0));
-            
-            settingsMenu.settings.Add(new SettingsEntry("", SettingsEntry.InteractionType.nonSelectableAndNonInteractable, new List<string>() { "" }, 0));
-            //settingsMenu.settings.Add(new SettingsEntry("Files", SettingsEntry.InteractionType.nonSelectableAndNonInteractable, new List<string>() { "" }, 0));
+                #region Variables
+                
+                //variables that don't depend on the settings manager
+                char dirNavigationChar = System.IO.Path.DirectorySeparatorChar;
+                string LogFileName = "FileFinder_log_" + new Random().Next(1111, 9999).ToString() + ".txt";
+                string TempDirectory = System.IO.Path.TrimEndingDirectorySeparator(System.IO.Path.GetTempPath());
+                List<string> FilePaths = new List<string>();
+                List<Exception> ExceptionsThrown = new List<Exception>();
+                string FileFinderAppVersion = "v1.0.0";
 
-            settingsMenu.settings.Add(new SettingsEntry("Should filenames be changed?", SettingsEntry.InteractionType.selectableAndInteractable, new List<string>() { "No, do not change the name", "Add date only", "Add date and iterator" }, 2));
-            settingsMenu.settings.Add(new SettingsEntry("Should files be sorted?", SettingsEntry.InteractionType.selectableAndInteractable, new List<string>() { "No", "Yes" }, 1));
-            settingsMenu.settings.Add(new SettingsEntry("Should duplicates be overwritten?", SettingsEntry.InteractionType.selectableAndInteractable, new List<string>() { "No, always keep the duplicate", "Only overwrite if source file is newer", "Only overwrite if source file is older", "Yes, always overwrite the duplicate" }, 1));
-            //settingsMenu.settings.Add(new SettingsEntry("Create a directory to copy the files to?", SettingsEntry.InteractionType.selectableAndInteractable, new List<string>() { "No", "Yes" }, 0));
-            
-            settingsMenu.settings.Add(new SettingsEntry("", SettingsEntry.InteractionType.nonSelectableAndNonInteractable, new List<string>() { "" }, 0));
-            settingsMenu.settings.Add(new SettingsEntry("", SettingsEntry.InteractionType.selectableAndInteractable, new List<string>() { "$Done" }, 0));
+                #endregion
+                
+                #region Self-update
 
-            while (!settingsMenu.DrawSettings("FileFinder settings manager"));
-            
-            //variables that depend on the settings manager
-            string Path = settingsMenu.settings[0].StrValueLabels[1];
-            string TargetPath = settingsMenu.settings[1].StrValueLabels[1];
-            int FileNameType = settingsMenu.settings[3].IntSelection;
-            bool SortingEnabled = settingsMenu.settings[4].IntSelection == 1;
-            int OverwriteType = settingsMenu.settings[5].IntSelection;
-            bool CreateTargetDir = settingsMenu.settings[6].IntSelection == 1;
+                Console.WriteLine("Checking for updates...");
+
+                //I would've used "GitHub.ReleaseDownloader" but it is not compatible with .NET Core 3.1
+
+                #endregion
+
+                #region Settings manager
+
+                Console.CursorVisible = false;
+                Console.WriteLine("If you don't see a menu appear, restart the app.");
+                
+                //Settings manager is called here
+                SettingsUI settingsMenu = new SettingsUI();
+
+                //add menu entries
+                //settingsMenu.settings.Add(new SettingsEntry("Paths", SettingsEntry.InteractionType.nonSelectableAndNonInteractable, new List<string>() { "" }, 0));
+                settingsMenu.settings.Add(new SettingsEntry("Source path", SettingsEntry.InteractionType.selectableAndInteractable, new List<string>() { "$Path", ""}, 0, "Path to the files you want sorted i.e. \"Family_pictures\""));
+                settingsMenu.settings.Add(new SettingsEntry("Destination path", SettingsEntry.InteractionType.selectableAndInteractable, new List<string>() { "$Path", "" }, 0, "Path to the destination folder i.e. \"Family_pictures_sorted\""));
+                //settingsMenu.settings.Add(new SettingsEntry("Testpath", SettingsEntry.InteractionType.selectableAndInteractable, new List<string>() { "$Input", "" }, 0));
+                
+                settingsMenu.settings.Add(new SettingsEntry("", SettingsEntry.InteractionType.nonSelectableAndNonInteractable, new List<string>() { "" }, 0));
+                //settingsMenu.settings.Add(new SettingsEntry("Files", SettingsEntry.InteractionType.nonSelectableAndNonInteractable, new List<string>() { "" }, 0));
+
+                settingsMenu.settings.Add(new SettingsEntry("Should filenames be changed?", SettingsEntry.InteractionType.selectableAndInteractable, new List<string>() { "No, do not change the name", "Add date only", "Add date and iterator" }, 2));
+                settingsMenu.settings.Add(new SettingsEntry("Should files be sorted?", SettingsEntry.InteractionType.selectableAndInteractable, new List<string>() { "No", "Yes" }, 1));
+                settingsMenu.settings.Add(new SettingsEntry("Should duplicates be overwritten?", SettingsEntry.InteractionType.selectableAndInteractable, new List<string>() { "No, always keep the duplicate", "Only overwrite if source file is newer", "Only overwrite if source file is older", "Yes, always overwrite the duplicate" }, 1));
+                //settingsMenu.settings.Add(new SettingsEntry("Create a directory to copy the files to?", SettingsEntry.InteractionType.selectableAndInteractable, new List<string>() { "No", "Yes" }, 0));
+                
+                settingsMenu.settings.Add(new SettingsEntry("", SettingsEntry.InteractionType.nonSelectableAndNonInteractable, new List<string>() { "" }, 0));
+                settingsMenu.settings.Add(new SettingsEntry("", SettingsEntry.InteractionType.selectableAndInteractable, new List<string>() { "$Done" }, 0));
+
+                while (!settingsMenu.DrawSettings("FileFinder settings manager"));
+                
+                //variables that depend on the settings manager
+                string Path = settingsMenu.settings[0].StrValueLabels[1];
+                string TargetPath = settingsMenu.settings[1].StrValueLabels[1];
+                int FileNameType = settingsMenu.settings[3].IntSelection;
+                bool SortingEnabled = settingsMenu.settings[4].IntSelection == 1;
+                int OverwriteType = settingsMenu.settings[5].IntSelection;
+                bool CreateTargetDir = settingsMenu.settings[6].IntSelection == 1;
+
+                #endregion
 
             #endregion
 
             #region Phases Init
 
-            //create log directory
-            try 
-            {
-                if (!Directory.Exists("." + dirNavigationChar + "FileFinder_Logs"))
-                {
-                    Directory.CreateDirectory("." + dirNavigationChar + "FileFinder_Logs");
-                }
-            } 
-            catch 
-            {
-                Console.WriteLine("Logdir creation: The programm encountered a severe error and cannot continue.");
-                Console.CursorVisible = true;
-                return;
-            }
-            
-            //create log file
-            StreamWriter logFile;
-            try 
-            {
-                logFile = new StreamWriter("." + dirNavigationChar + "FileFinder_Logs" + dirNavigationChar + LogFileName);
-            } 
-            catch (IOException ioException) 
-            {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine("Logfile creation: Whoops, looks like something went wrong when creating a log file! Trying again!");
-                Console.ResetColor();
-                ExceptionsThrown.Add(ioException);
+                #region Log-files and directory creation
+                
+                //create log directory
                 try 
                 {
-                    logFile = new StreamWriter("." + dirNavigationChar + "FileFinder_Logs" + dirNavigationChar + LogFileName + new Random().Next(0, 9));   
+                    if (!Directory.Exists("." + dirNavigationChar + "FileFinder_Logs"))
+                    {
+                        Directory.CreateDirectory("." + dirNavigationChar + "FileFinder_Logs");
+                    }
                 } 
                 catch 
                 {
-                    Console.WriteLine("Logfile creation: The programm encountered a severe error and cannot continue.");
+                    Console.WriteLine("Logdir creation: The programm encountered a severe error and cannot continue.");
                     Console.CursorVisible = true;
                     return;
                 }
-            }
+                
+                //create log file
+                StreamWriter logFile;
+                try 
+                {
+                    logFile = new StreamWriter("." + dirNavigationChar + "FileFinder_Logs" + dirNavigationChar + LogFileName);
+                } 
+                catch (IOException ioException) 
+                {
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine("Logfile creation: Whoops, looks like something went wrong when creating a log file! Trying again!");
+                    Console.ResetColor();
+                    ExceptionsThrown.Add(ioException);
+                    try 
+                    {
+                        logFile = new StreamWriter("." + dirNavigationChar + "FileFinder_Logs" + dirNavigationChar + LogFileName + new Random().Next(0, 9));   
+                    } 
+                    catch 
+                    {
+                        Console.WriteLine("Logfile creation: The programm encountered a severe error and cannot continue.");
+                        Console.CursorVisible = true;
+                        return;
+                    }
+                }
+
+                #endregion
 
             //initialize the console ... again (just in case)
-            Console.CursorVisible = false;
             Console.Clear();
             Console.SetCursorPosition(0, 0);
 
-            //check if the path is valid (obsolete?)
-            /*
-            if (File.Exists(Path))
-            {
-                Console.WriteLine("\"" + Path + "\" is a file");
-                logFile.WriteLine("Path-check log:");
-                logFile.WriteLine("Source-path is a file");
-                logFile.WriteLine();
-                logFile.WriteLine("===============================");                
-                logFile.Close();
+                #region Legacy code
                 
-                Console.CursorVisible = true;
-                return;
-            }
-            else if (!Directory.Exists(Path))
-            {
-                Console.WriteLine("\"" + Path + "\" does not exist");
-                logFile.WriteLine("Path-check log:");
-                logFile.WriteLine("Source-path does not exist");
-                logFile.WriteLine();
-                logFile.WriteLine("===============================");                
-                logFile.Close();
-                
-                Console.CursorVisible = true;
-                return;
-            }
+                //check if the path is valid
+                /*
+                if (File.Exists(Path))
+                {
+                    Console.WriteLine("\"" + Path + "\" is a file");
+                    logFile.WriteLine("Path-check log:");
+                    logFile.WriteLine("Source-path is a file");
+                    logFile.WriteLine();
+                    logFile.WriteLine("===============================");                
+                    logFile.Close();
+                    
+                    Console.CursorVisible = true;
+                    return;
+                }
+                else if (!Directory.Exists(Path))
+                {
+                    Console.WriteLine("\"" + Path + "\" does not exist");
+                    logFile.WriteLine("Path-check log:");
+                    logFile.WriteLine("Source-path does not exist");
+                    logFile.WriteLine();
+                    logFile.WriteLine("===============================");                
+                    logFile.Close();
+                    
+                    Console.CursorVisible = true;
+                    return;
+                }
 
-            //create a directory before the check
-            if (CreateTargetDir && !Directory.Exists(TargetPath) && !File.Exists(TargetPath))
-            {
-                Directory.CreateDirectory(TargetPath);
-            }
+                //create a directory before the check
+                if (CreateTargetDir && !Directory.Exists(TargetPath) && !File.Exists(TargetPath))
+                {
+                    Directory.CreateDirectory(TargetPath);
+                }
+                
+                //check if the target path is valid
+                if (File.Exists(TargetPath))
+                {
+                    Console.WriteLine("\"" + TargetPath + "\" is a file");
+                    logFile.WriteLine("Path-check log:");
+                    logFile.WriteLine("Target-path is a file");
+                    logFile.WriteLine();
+                    logFile.WriteLine("===============================");                
+                    logFile.Close();
+                    
+                    Console.CursorVisible = true;
+                    return;
+                }
+                else if (!Directory.Exists(TargetPath))
+                {
+                    Console.WriteLine("\"" + TargetPath + "\" does not exist");
+                    logFile.WriteLine("Path-check log:");
+                    logFile.WriteLine("Target-path does not exist");
+                    logFile.WriteLine();
+                    logFile.WriteLine("===============================");                
+                    logFile.Close();
+                    
+                    Console.CursorVisible = true;
+                    return;
+                }
+                */
+
+                #endregion
             
-            //check if the target path is valid
-            if (File.Exists(TargetPath))
-            {
-                Console.WriteLine("\"" + TargetPath + "\" is a file");
-                logFile.WriteLine("Path-check log:");
-                logFile.WriteLine("Target-path is a file");
+                #region Logfile init
+
+                //write to file
+                logFile.WriteLine("FILE LOCATOR & COPIER LOG");
                 logFile.WriteLine();
-                logFile.WriteLine("===============================");                
-                logFile.Close();
-                
-                Console.CursorVisible = true;
-                return;
-            }
-            else if (!Directory.Exists(TargetPath))
-            {
-                Console.WriteLine("\"" + TargetPath + "\" does not exist");
-                logFile.WriteLine("Path-check log:");
-                logFile.WriteLine("Target-path does not exist");
+                logFile.WriteLine("===============================");
+
+                logFile.WriteLine("These arguments were given:");
+                logFile.WriteLine("Set[0] = " + Path);
+                logFile.WriteLine("Set[1] = " + TargetPath);
+                logFile.WriteLine("Set[2] = " + FileNameType);
+                logFile.WriteLine("Set[3] = " + OverwriteType);
                 logFile.WriteLine();
-                logFile.WriteLine("===============================");                
-                logFile.Close();
+                logFile.WriteLine("===============================");
+
+                #endregion
+
+                #region Splash
                 
-                Console.CursorVisible = true;
-                return;
-            }
-            */
-            
-            //write to file
-            logFile.WriteLine("FILE LOCATOR & COPIER LOG");
-            logFile.WriteLine();
-            logFile.WriteLine("===============================");
+                Console.Clear();
+                Console.WriteLine("[ FILE FINDER ]");
+                System.Threading.Thread.Sleep(500);
+                Console.WriteLine($"[ VERSION {FileFinderAppVersion} ]");
+                System.Threading.Thread.Sleep(500);
+                Console.WriteLine("[ MADE BY: GermanBread#9087 ]");
+                System.Threading.Thread.Sleep(500);
+                Console.WriteLine("[ GITHUB PROJECT: https://github.com/GermanBread/FileFinderGit ]");
+                System.Threading.Thread.Sleep(500);
+                Console.ForegroundColor = ConsoleColor.Green;
+                Console.WriteLine("[ STARTING ]");
+                Console.ResetColor();
+                System.Threading.Thread.Sleep(1000);
 
-            logFile.WriteLine("These arguments were given:");
-            logFile.WriteLine("Set[0] = " + Path);
-            logFile.WriteLine("Set[1] = " + TargetPath);
-            logFile.WriteLine("Set[2] = " + FileNameType);
-            logFile.WriteLine("Set[3] = " + OverwriteType);
-            logFile.WriteLine();
-            logFile.WriteLine("===============================");
-
-            //file lists
-            List<string> FilePaths = new List<string>();
-
-            //splash screen
-            Console.Clear();
-            Console.WriteLine("[ FILE FINDER ]");
-            System.Threading.Thread.Sleep(500);
-            Console.WriteLine("[ STABLE BRANCH ]");
-            System.Threading.Thread.Sleep(500);
-            Console.WriteLine("[ MADE BY: GermanBread#9087 ]");
-            System.Threading.Thread.Sleep(500);
-            Console.WriteLine("[ GITHUB PROJECT: https://github.com/GermanBread/FileFinderGit ]");
-            System.Threading.Thread.Sleep(500);
-            Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine("[ STARTING ]");
-            Console.ResetColor();
-            System.Threading.Thread.Sleep(1000);
+                #endregion
 
             #endregion
             
@@ -203,14 +237,10 @@ namespace FileFinder
             
             Console.Clear();
             Console.SetCursorPosition(0, 0);
-            /////////////////////////////////////////
-                        //File LOCATOR//
-            /////////////////////////////////////////
-            Console.WriteLine("Looking for files in \"" + Path + "\"");
             
-            //search all directories for files
+            Console.WriteLine("Looking for files in \"" + Path + "\"");
             //define how strings should be compared
-            var stringComparisonType = StringComparison.OrdinalIgnoreCase;
+            StringComparison stringComparisonType = StringComparison.OrdinalIgnoreCase;
             //look for files with certain extensions
             try
             {
