@@ -133,7 +133,7 @@ namespace User_Interface
                 if (settingsElement.StrDescription != null && settingsElement == settings[selectedSetting])
                 {
                     Console.ForegroundColor = ConsoleColor.DarkGray;
-                    Console.WriteLine(" Description: " + settingsElement.StrDescription);
+                    Console.Write(" Description: " + settingsElement.StrDescription);
                     Console.ResetColor();
                 }
             }
