@@ -688,9 +688,9 @@ namespace FileFinder
                 {
                     var answer = sr.ReadToEnd();
                     //I'm too lazy to deal with this JSON stuff, let's just brute force it
-                    string[] brute_forced_JSON = answer.Split(',');
-                    brute_forced_JSON = brute_forced_JSON.Where(a => a.Contains("tag_name")).ToArray();
-                    versionNumber =new string(brute_forced_JSON[0].ToCharArray().Where(a => validChars.Contains(a)).ToArray());
+                    string[] bruteForcedJSON = answer.Split(',');
+                    bruteForcedJSON = bruteForcedJSON.Where(a => a.Contains("tag_name")).ToArray();
+                    versionNumber = new string(bruteForcedJSON[0].ToCharArray().Where(a => validChars.Contains(a)).ToArray());
                     sr.Close();
                     sr.Dispose();
                 }
