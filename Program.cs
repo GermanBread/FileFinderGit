@@ -27,7 +27,7 @@ namespace FileFinder
                 bool IsInTEMP = Directory.GetCurrentDirectory().Contains(TempDirectory);
                 List<string> FilePaths = new List<string>();
                 List<Exception> ExceptionsThrown = new List<Exception>();
-                string FileFinderAppVersion = "v1.1.0";
+                string FileFinderAppVersion = "v1.1.1";
                 string AppExtension = IsUNIX ? ".x86-64" : ".exe";
 
                 #endregion
@@ -79,7 +79,9 @@ namespace FileFinder
                     }
 
                     Console.ForegroundColor = ConsoleColor.Green;
-                    Console.WriteLine("Update complete. You can close this window now and restart the app.");
+                    Console.WriteLine("Update complete. You may close this window and restart the app.");
+                    Console.ForegroundColor = ConsoleColor.DarkGray;
+                    Console.WriteLine("Note: Any leftover files will not be deleted until the app has been restarted.");
                     Console.ResetColor();
                     return;
                 }
