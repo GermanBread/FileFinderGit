@@ -54,28 +54,33 @@ namespace FileFinder
                     
                     string appDirPath = args[0];
                     
-                    Console.ForegroundColor = ConsoleColor.Green;
-                    Console.WriteLine("Updater is now replacing your application with a newer version.");
-                    Console.ResetColor();
+                    Console.ForegroundColor = ConsoleColor.DarkGray;
+                    Console.WriteLine("Preparing");
                     
                     try
                     {
                         //Instead of deleting the application instantly, make a backup.
+                        Console.WriteLine("Making backup");
                         File.Move(appDirPath + DirNavigationChar + "FileFinder" + AppExtension, appDirPath + DirNavigationChar + "FileFinder_backup" + AppExtension);
+                        Console.WriteLine("Replacing executable with downloaded version");
                         File.Move(Directory.GetCurrentDirectory() + DirNavigationChar + "FileFinder" + AppExtension, appDirPath + DirNavigationChar + "FileFinder" + AppExtension);
 
                         //Now delete the backup.
+                        Console.WriteLine("Deleting the backup");
                         File.Delete(appDirPath + DirNavigationChar + "FileFinder_backup" + AppExtension);
                     }
-                    catch
+                    catch(Exception caughtException)
                     {
                         Console.ForegroundColor = ConsoleColor.Red;
                         Console.WriteLine("Update failed, make sure the app's path doesn't contain spaces!");
                         Console.ResetColor();
+                        Console.WriteLine("Exception:" + caughtException.Message);
                         return;
                     }
 
+                    Console.ForegroundColor = ConsoleColor.Green;
                     Console.WriteLine("Update complete. You can close this window now and restart the app.");
+                    Console.ResetColor();
                     return;
                 }
                 
