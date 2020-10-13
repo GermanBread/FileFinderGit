@@ -2,6 +2,8 @@
 using System.IO;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
+using System.Diagnostics;
 using MetadataExtractor.Formats.Exif;
 using MetadataExtractor.Formats.Xmp;
 using User_Interface;
@@ -13,34 +15,190 @@ namespace FileFinder
         static void Main(string[] args)
         {             
             #region Program Setup
+              
+                #region Variables
+                
+                //variables that don't depend on the settings manager
+                char DirNavigationChar = System.IO.Path.DirectorySeparatorChar;
+                bool IsUNIX = DirNavigationChar == '/';
+                string LogFileName = "FileFinder_log_" + new Random().Next(1111, 9999).ToString() + ".txt";
+                string TempDirectory = System.IO.Path.TrimEndingDirectorySeparator(System.IO.Path.GetTempPath());
+                bool IsInTEMP = Directory.GetCurrentDirectory().Contains(TempDirectory);
+                List<string> FilePaths = new List<string>();
+                List<Exception> ExceptionsThrown = new List<Exception>();
+                string FileFinderAppVersion = "v1.1.0";
+                string AppExtension = IsUNIX ? ".x86-64" : ".exe";
+
+                #endregion
 
                 #region Failsafe
                 
                 //Exit if the programm isn't running in a console window!
-                if (Console.WindowHeight == 0 && Console.WindowWidth == 0)
+                if (Console.WindowHeight == 0 && Console.WindowWidth == 0 && !IsInTEMP)
                 {
                     return;
                 }
 
                 #endregion
-
-                #region Variables
-                
-                //variables that don't depend on the settings manager
-                char dirNavigationChar = System.IO.Path.DirectorySeparatorChar;
-                string LogFileName = "FileFinder_log_" + new Random().Next(1111, 9999).ToString() + ".txt";
-                string TempDirectory = System.IO.Path.TrimEndingDirectorySeparator(System.IO.Path.GetTempPath());
-                List<string> FilePaths = new List<string>();
-                List<Exception> ExceptionsThrown = new List<Exception>();
-                string FileFinderAppVersion = "v1.0.0";
-
-                #endregion
                 
                 #region Self-update
+                
+                if (IsInTEMP)
+                {
+                    if (args.Length == 0)
+                    {
+                        Console.WriteLine("The temp directory is reserved for the updater!");
+                        return;
+                    }
+                    
+                    string appDirPath = args[0];
+                    
+                    Console.ForegroundColor = ConsoleColor.Green;
+                    Console.WriteLine("Updater is now replacing your application with a newer version.");
+                    Console.ResetColor();
+                    
+                    try
+                    {
+                        //Instead of deleting the application instantly, make a backup.
+                        File.Move(appDirPath + DirNavigationChar + "FileFinder" + AppExtension, appDirPath + DirNavigationChar + "FileFinder_backup" + AppExtension);
+                        File.Move(Directory.GetCurrentDirectory() + DirNavigationChar + "FileFinder" + AppExtension, appDirPath + DirNavigationChar + "FileFinder" + AppExtension);
 
-                Console.WriteLine("Checking for updates...");
+                        //Now delete the backup.
+                        File.Delete(appDirPath + DirNavigationChar + "FileFinder_backup" + AppExtension);
+                    }
+                    catch
+                    {
+                        Console.ForegroundColor = ConsoleColor.Red;
+                        Console.WriteLine("Update failed, make sure the app's path doesn't contain spaces!");
+                        Console.ResetColor();
+                        return;
+                    }
 
-                //I would've used "GitHub.ReleaseDownloader" but it is not compatible with .NET Core 3.1
+                    Console.WriteLine("Update complete. You can close this window now and restart the app.");
+                    return;
+                }
+                
+                try
+                {
+                    //Get a list of files and delete them.
+                    if (Directory.Exists(TempDirectory + DirNavigationChar + "FileFinderUpdater"))
+                    {
+                        foreach (var file in Directory.EnumerateFiles(TempDirectory + DirNavigationChar + "FileFinderUpdater"))
+                        {
+                            File.Delete(file);
+                        }
+                        Directory.Delete(TempDirectory + DirNavigationChar + "FileFinderUpdater");
+                    }
+                }
+                catch (Exception caughtException)
+                {
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine("Temporary directory could not be deleted.");
+                    Console.ForegroundColor = ConsoleColor.Yellow;
+                    Console.WriteLine($"Delete \"{TempDirectory + DirNavigationChar}FileFinderUpdater\" and restart the app.");
+                    Console.ResetColor();
+                    Console.WriteLine("Exception: " + caughtException.Message);
+                    return;
+                }
+
+                if (false || Directory.EnumerateDirectories(Directory.GetCurrentDirectory()).Where(a => a.Contains(DirNavigationChar + "obj")).ToList().Count > 0 || Directory.GetCurrentDirectory().Contains(DirNavigationChar + "obj"))
+                {
+                    Console.ForegroundColor = ConsoleColor.DarkGray;
+                    Console.WriteLine("App is running in local debug or updating is disabled; Skipping...");
+                    Console.ResetColor();
+                }
+                else
+                {
+                    Console.WriteLine("Checking for updates...");
+                    
+                    //TODO: Get info from this URL https://api.github.com/repos/GermanBread/FileFinderGit/releases
+                    string newReleaseVersion = "v1.1.0";
+                    
+                    int updateLevel = CompareVersions(FileFinderAppVersion, newReleaseVersion);
+                    //See method "CompareVersions" for more details.
+                    //Here's how "update levels" work:
+                    //0 = same version >>> do nothing
+                    //1 = minor update >>> update
+                    //2 = normal update >>> update
+                    //3 = major update >>> update
+
+                    //The code below executes if an update has been found. In other words: If the current version is older than the newer one...
+                    if (updateLevel > 0)
+                    {
+                        Console.ForegroundColor = ConsoleColor.Green;
+                        Console.Write("Update found! ");
+                        Console.ForegroundColor = ConsoleColor.DarkGray;
+                        switch (updateLevel)
+                        {
+                            case 1:
+                                Console.Write("Minor update: ");
+                                break;
+
+                            case 2:
+                                Console.Write("Medium update: ");
+                                break;
+
+                            case 3:
+                                Console.Write("Major update: ");
+                                break;
+                        }
+                        Console.ResetColor();
+                        Console.WriteLine(FileFinderAppVersion + " >> " + newReleaseVersion);
+
+                        string destPath = TempDirectory + DirNavigationChar + "FileFinderUpdater";
+                        
+                        Directory.CreateDirectory(destPath);
+
+                        //download the files
+                        try
+                        {
+                            Console.ForegroundColor = ConsoleColor.DarkGray;
+                            Console.WriteLine("Downloading release...");
+
+                            DownloadFile("https://github.com/GermanBread/FileFinderGit/releases/download/" + newReleaseVersion + "/FileFinder" + AppExtension, destPath + DirNavigationChar + "FileFinder_updater" + AppExtension);
+                            
+                            //The following step is neccessary for UNIX machines because files require "execute permissions"
+                            if (IsUNIX)
+                            {
+                                RunInBash("chmod +x " + destPath + DirNavigationChar + "FileFinder_updater" + AppExtension);
+                            }
+
+                            //Now duplicate the executable to avoid a headache later
+                            File.Copy(destPath + DirNavigationChar + "FileFinder_updater" + AppExtension, destPath + DirNavigationChar + "FileFinder" + AppExtension);
+
+                            Console.WriteLine("Starting updater...");
+                            Console.WriteLine("Updater at: " + destPath + DirNavigationChar + "FileFinder_updater" + AppExtension);
+                            Console.ResetColor();
+                            
+                            //Now start a thread which will replace the main thread.
+                            ProcessStartInfo startInfo = new ProcessStartInfo();
+                            startInfo.FileName = destPath + DirNavigationChar + "FileFinder" + AppExtension;
+                            startInfo.Arguments = "\"" + Directory.GetCurrentDirectory() + "\"";
+                            startInfo.WorkingDirectory = destPath;
+                            startInfo.CreateNoWindow = false;
+                            Process.Start(startInfo);
+                            
+                            return;
+                        }
+                        catch (Exception caughtException)
+                        {
+                            Console.ForegroundColor = ConsoleColor.Red;
+                            Console.WriteLine("Error while downloading release.");
+                            Console.ForegroundColor = ConsoleColor.Yellow;
+                            Console.WriteLine("Download the newest release at: https://github.com/GermanBread/FileFinderGit/releases");
+                            Console.ResetColor();
+                            Console.WriteLine("Exception: " + caughtException.Message);
+                            Console.ForegroundColor = ConsoleColor.DarkGray;
+                            Thread.Sleep(2000);
+                            Console.WriteLine("Continuing...");
+                            Console.ResetColor();
+                        }
+                    }
+                    else
+                    {
+                        Console.WriteLine("No updates found.");
+                    }
+                }
 
                 #endregion
 
@@ -69,7 +227,7 @@ namespace FileFinder
                 settingsMenu.settings.Add(new SettingsEntry("", SettingsEntry.InteractionType.nonSelectableAndNonInteractable, new List<string>() { "" }, 0));
                 settingsMenu.settings.Add(new SettingsEntry("", SettingsEntry.InteractionType.selectableAndInteractable, new List<string>() { "$Done" }, 0));
 
-                while (!settingsMenu.DrawSettings("FileFinder settings manager"));
+                while (!settingsMenu.DrawSettings("FileFinder settings manager " + FileFinderAppVersion));
                 
                 //variables that depend on the settings manager
                 string Path = settingsMenu.settings[0].StrValueLabels[1];
@@ -90,9 +248,9 @@ namespace FileFinder
                 //create log directory
                 try 
                 {
-                    if (!Directory.Exists("." + dirNavigationChar + "FileFinder_Logs"))
+                    if (!Directory.Exists("." + DirNavigationChar + "FileFinder_Logs"))
                     {
-                        Directory.CreateDirectory("." + dirNavigationChar + "FileFinder_Logs");
+                        Directory.CreateDirectory("." + DirNavigationChar + "FileFinder_Logs");
                     }
                 } 
                 catch 
@@ -106,7 +264,7 @@ namespace FileFinder
                 StreamWriter logFile;
                 try 
                 {
-                    logFile = new StreamWriter("." + dirNavigationChar + "FileFinder_Logs" + dirNavigationChar + LogFileName);
+                    logFile = new StreamWriter("." + DirNavigationChar + "FileFinder_Logs" + DirNavigationChar + LogFileName);
                 } 
                 catch (IOException ioException) 
                 {
@@ -116,7 +274,7 @@ namespace FileFinder
                     ExceptionsThrown.Add(ioException);
                     try 
                     {
-                        logFile = new StreamWriter("." + dirNavigationChar + "FileFinder_Logs" + dirNavigationChar + LogFileName + new Random().Next(0, 9));   
+                        logFile = new StreamWriter("." + DirNavigationChar + "FileFinder_Logs" + DirNavigationChar + LogFileName + new Random().Next(0, 9));   
                     } 
                     catch 
                     {
@@ -217,16 +375,18 @@ namespace FileFinder
                 
                 Console.Clear();
                 Console.WriteLine("[ FILE FINDER ]");
-                System.Threading.Thread.Sleep(500);
+                System.Threading.Thread.Sleep(250);
                 Console.WriteLine($"[ VERSION {FileFinderAppVersion} ]");
-                System.Threading.Thread.Sleep(500);
+                System.Threading.Thread.Sleep(250);
                 Console.WriteLine("[ MADE BY: GermanBread#9087 ]");
-                System.Threading.Thread.Sleep(500);
+                System.Threading.Thread.Sleep(250);
                 Console.WriteLine("[ GITHUB PROJECT: https://github.com/GermanBread/FileFinderGit ]");
-                System.Threading.Thread.Sleep(500);
+                System.Threading.Thread.Sleep(250);
+                Console.Write("[ ");
                 Console.ForegroundColor = ConsoleColor.Green;
-                Console.WriteLine("[ STARTING ]");
+                Console.Write("STARTING");
                 Console.ResetColor();
+                Console.WriteLine(" ]");
                 System.Threading.Thread.Sleep(1000);
 
                 #endregion
@@ -254,9 +414,8 @@ namespace FileFinder
                 //this happened once, so I'm handling the exception
                 Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine("An error occured. Check logs for more info");
-                Console.WriteLine();
-                Console.WriteLine("File finding method: " + caughtException.Message);
                 Console.ResetColor();
+                Console.WriteLine("File finding method: " + caughtException.Message);
                 logFile.WriteLine("File finding method: " + caughtException.Message);
                 logFile.Close();
                 Console.CursorVisible = true;
@@ -340,13 +499,13 @@ namespace FileFinder
                 string destpath;
                 string filename;
                 Func<bool, string> returnIterator = x => x ? i.ToString() : "";
-                Func<string, string> addDirNavCharIfNotInName = x => x[x.Length - 1] != dirNavigationChar ? dirNavigationChar.ToString() : "";
+                Func<string, string> addDirNavCharIfNotInName = x => x[x.Length - 1] != DirNavigationChar ? DirNavigationChar.ToString() : "";
                 if (fileShotTime.Take(4).All(c => c >= '0' && c <= '9'))
                 {
                     //this will execute when the date-format is yyyy:mm:dd-hh:MM:ss
                     if (FileNameType > 0)
                     {
-                        destpath = TargetPath + addDirNavCharIfNotInName(TargetPath) + (SortingEnabled ? new string(fileShotTime.Take(4).ToArray()) + "_" + new string(fileShotTime.Skip(5).Take(2).ToArray()) + dirNavigationChar : "");
+                        destpath = TargetPath + addDirNavCharIfNotInName(TargetPath) + (SortingEnabled ? new string(fileShotTime.Take(4).ToArray()) + "_" + new string(fileShotTime.Skip(5).Take(2).ToArray()) + DirNavigationChar : "");
 
                         filename = new string(fileShotTime.Take(4).ToArray()) + "_" + new string(fileShotTime.Skip(5).Take(2).ToArray()) + "_" 
                         + new string(fileShotTime.Skip(8).Take(2).ToArray()) + "-" + new string(fileShotTime.Skip(11).Take(2).ToArray()) + "+" + new string(fileShotTime.Skip(14).Take(2).ToArray())
@@ -354,7 +513,7 @@ namespace FileFinder
                     }
                     else
                     {
-                        destpath = TargetPath + addDirNavCharIfNotInName(TargetPath) + (SortingEnabled ? new string(fileShotTime.Take(4).ToArray()) + "_" + new string(fileShotTime.Skip(5).Take(2).ToArray()) + dirNavigationChar : "");
+                        destpath = TargetPath + addDirNavCharIfNotInName(TargetPath) + (SortingEnabled ? new string(fileShotTime.Take(4).ToArray()) + "_" + new string(fileShotTime.Skip(5).Take(2).ToArray()) + DirNavigationChar : "");
                         filename = IsolateFilename(FilePaths[i]) + "." + IsolateFileExtension(FilePaths[i]);
                     }
                 }
@@ -363,7 +522,7 @@ namespace FileFinder
                     //this will execute when the date-format is dd:mm:yyyy-hh:MM:ss
                     if (FileNameType > 0)
                     {
-                        destpath = TargetPath + addDirNavCharIfNotInName(TargetPath) + (SortingEnabled ? new string(fileShotTime.Skip(6).Take(4).ToArray()) + "_" + new string(fileShotTime.Skip(3).Take(2).ToArray()) + dirNavigationChar : "");
+                        destpath = TargetPath + addDirNavCharIfNotInName(TargetPath) + (SortingEnabled ? new string(fileShotTime.Skip(6).Take(4).ToArray()) + "_" + new string(fileShotTime.Skip(3).Take(2).ToArray()) + DirNavigationChar : "");
 
                         filename = new string(fileShotTime.Skip(6).Take(4).ToArray()) + "_" + new string(fileShotTime.Skip(3).Take(2).ToArray()) + "_" 
                         + new string(fileShotTime.Take(2).ToArray()) + "-" + new string(fileShotTime.Skip(11).Take(2).ToArray()) + "+" + new string(fileShotTime.Skip(14).Take(2).ToArray())
@@ -371,7 +530,7 @@ namespace FileFinder
                     }
                     else
                     {
-                        destpath = TargetPath + addDirNavCharIfNotInName(TargetPath) + (SortingEnabled ? new string(fileShotTime.Skip(6).Take(4).ToArray()) + "_" + new string(fileShotTime.Skip(3).Take(2).ToArray()) + dirNavigationChar : "");
+                        destpath = TargetPath + addDirNavCharIfNotInName(TargetPath) + (SortingEnabled ? new string(fileShotTime.Skip(6).Take(4).ToArray()) + "_" + new string(fileShotTime.Skip(3).Take(2).ToArray()) + DirNavigationChar : "");
                         filename = IsolateFilename(FilePaths[i]) + "." + IsolateFileExtension(FilePaths[i]);
                     }
                 }
@@ -506,12 +665,131 @@ namespace FileFinder
 
             //close the stream
             logFile.Close();
+            logFile.Dispose();
             Console.CursorVisible = true;
 
             #endregion
         }
         
         #region Program Methods
+        
+        //Source: https://gist.github.com/nboubakr/7812375
+        static void DownloadFile(string sourceURL, string destinationPath)
+        {
+            long fileSize = 0;
+            int bufferSize = 1024;
+            bufferSize *= 1000;
+            long existLen = 0;
+            
+            System.IO.FileStream saveFileStream;
+            if (System.IO.File.Exists(destinationPath))
+            {
+                System.IO.FileInfo destinationFileInfo = new System.IO.FileInfo(destinationPath);
+                existLen = destinationFileInfo.Length;
+            }
+
+            if (existLen > 0)
+                saveFileStream = new System.IO.FileStream(destinationPath, System.IO.FileMode.Append, System.IO.FileAccess.Write, System.IO.FileShare.ReadWrite);
+            else
+                saveFileStream = new System.IO.FileStream(destinationPath, System.IO.FileMode.Create, System.IO.FileAccess.Write, System.IO.FileShare.ReadWrite);
+        
+            System.Net.HttpWebRequest httpReq;
+            System.Net.HttpWebResponse httpRes;
+            httpReq = (System.Net.HttpWebRequest) System.Net.HttpWebRequest.Create(sourceURL);
+            httpReq.AddRange((int) existLen);
+            System.IO.Stream resStream;
+            httpRes = (System.Net.HttpWebResponse) httpReq.GetResponse();
+            resStream = httpRes.GetResponseStream();
+        
+            fileSize = httpRes.ContentLength;
+        
+            int byteSize;
+            byte[] downBuffer = new byte[bufferSize];
+        
+            while ((byteSize = resStream.Read(downBuffer, 0, downBuffer.Length)) > 0)
+            {
+                saveFileStream.Write(downBuffer, 0, byteSize);
+            }
+            saveFileStream.Close();
+            saveFileStream.Dispose();
+        }
+
+        public static void RunInBash(string cmd)
+        {
+            var escapedArgs = cmd.Replace("\"", "\\\"");
+
+            var process = new Process
+            {
+                StartInfo = new ProcessStartInfo
+                {
+                    RedirectStandardOutput = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true,
+                    WindowStyle = ProcessWindowStyle.Hidden,
+                    FileName = "/bin/bash",
+                    Arguments = $"-c \"{escapedArgs}\""
+                }
+            };
+
+            process.Start();
+            process.WaitForExit();
+            return;
+        }
+        
+        static int CompareVersions(string first, string second)
+        {
+            char[] validVersionChars = new char[] { '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '.'};
+            char[] validIntChars = new char[] { '1', '2', '3', '4', '5', '6', '7', '8', '9', '0'};
+
+            string firstFiltered = new string(first.ToCharArray().Where((a) => validVersionChars.Contains(a)).ToArray());
+            string secondFiltered = new string(second.ToCharArray().Where((a) => validVersionChars.Contains(a)).ToArray());
+
+            List<int> firstSplit = new List<int>();
+            foreach (var item in firstFiltered.Split('.'))
+            {
+                firstSplit.Add(int.Parse(item.Where((a) => validIntChars.Contains(a)).ToArray()));
+            }
+           
+            List<int> secondSplit = new List<int>();
+            foreach (var item in secondFiltered.Split('.'))
+            {
+                secondSplit.Add(int.Parse(item.Where((a) => validIntChars.Contains(a)).ToArray()));
+            }
+
+            int updateLevel = 0;
+            //Here's how "update levels" work:
+            //0 = same version >>> do nothing
+            //1 = minor update >>> update
+            //2 = normal update >>> update
+            //3 = major update >>> update
+
+            //compare versions            
+            if (firstSplit[0] == secondSplit[0])
+            {
+                if (firstSplit[1] == secondSplit[1])
+                {
+                    if (firstSplit[2] == secondSplit[2])
+                    {
+                        updateLevel = 0;
+                    }
+                    else
+                    {
+                        updateLevel = 1;
+                    }
+                }
+                else
+                {
+                    updateLevel = 2;
+                }
+            }
+            else
+            {
+                updateLevel = 3;
+            }
+            
+            return updateLevel;
+        }
+
         static string BarGraph(int value, int maxValue, int width)
         {
             string output = "";

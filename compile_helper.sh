@@ -95,5 +95,8 @@ unalias compile;
 #remove debug files
 rm -f build/*.pdb
 
+#add a file-extension to the Linux executable
+mv -f build/FileFinder build/FileFinder.x86-64 2>/dev/null
+
 #Exit the script
 exit;
