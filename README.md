@@ -19,6 +19,8 @@ Then cd into the "FileFinderGit" folder, execute `./build\ script.sh`, select a 
 Windows: 
 In the Application's folder shift-click on empty space in Explorer-window and slect "Open Powershell".
 Then type ".\FileFinder.exe" and press Enter.
+**Important note:** Double clicking the app does not allow it to properly update.
 
 Linux: 
 Open Terminal, cd into the compiled application's folder, type "./FileFinder.x86-64" and press enter.
+**Important note:** Do not click "run in *xyz*" that does not allow the app to properly update.

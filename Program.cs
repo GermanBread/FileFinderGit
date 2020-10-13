@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Diagnostics;
+using System.Net;
 using MetadataExtractor.Formats.Exif;
 using MetadataExtractor.Formats.Xmp;
 using User_Interface;
@@ -101,7 +102,7 @@ namespace FileFinder
                     return;
                 }
 
-                if (false || Directory.EnumerateDirectories(Directory.GetCurrentDirectory()).Where(a => a.Contains(DirNavigationChar + "obj")).ToList().Count > 0 || Directory.GetCurrentDirectory().Contains(DirNavigationChar + "obj"))
+                if (Directory.EnumerateDirectories(Directory.GetCurrentDirectory()).Where(a => a.Contains(DirNavigationChar + "obj")).ToList().Count > 0 || Directory.GetCurrentDirectory().Contains(DirNavigationChar + "obj"))
                 {
                     Console.ForegroundColor = ConsoleColor.DarkGray;
                     Console.WriteLine("App is running in local debug or updating is disabled; Skipping...");
@@ -111,9 +112,7 @@ namespace FileFinder
                 {
                     Console.WriteLine("Checking for updates...");
                     
-                    //TODO: Get info from this URL https://api.github.com/repos/GermanBread/FileFinderGit/releases
-                    string newReleaseVersion = "v1.1.0";
-                    
+                    string newReleaseVersion = GetNewestVersion();
                     int updateLevel = CompareVersions(FileFinderAppVersion, newReleaseVersion);
                     //See method "CompareVersions" for more details.
                     //Here's how "update levels" work:
@@ -196,7 +195,7 @@ namespace FileFinder
                     }
                     else
                     {
-                        Console.WriteLine("No updates found.");
+                        Console.WriteLine("This app is up-to-date.");
                     }
                 }
 
@@ -672,6 +671,33 @@ namespace FileFinder
         }
         
         #region Program Methods
+        
+        static string GetNewestVersion()
+        {
+            string versionNumber = "";
+            char[] validChars = new char[] { '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '.', 'v'};
+            
+            var webRequest = WebRequest.Create("https://api.github.com/repos/GermanBread/FileFinderGit/releases/latest") as HttpWebRequest;
+
+            webRequest.ContentType = "application/json";
+            webRequest.UserAgent = "Nothing";
+
+            using (var s = webRequest.GetResponse().GetResponseStream())
+            {
+                using (var sr = new StreamReader(s))
+                {
+                    var answer = sr.ReadToEnd();
+                    //I'm too lazy to deal with this JSON stuff, let's just brute force it
+                    string[] brute_forced_JSON = answer.Split(',');
+                    brute_forced_JSON = brute_forced_JSON.Where(a => a.Contains("tag_name")).ToArray();
+                    versionNumber =new string(brute_forced_JSON[0].ToCharArray().Where(a => validChars.Contains(a)).ToArray());
+                    sr.Close();
+                    sr.Dispose();
+                }
+            }
+            
+            return versionNumber;
+        }
         
         //Source: https://gist.github.com/nboubakr/7812375
         static void DownloadFile(string sourceURL, string destinationPath)
