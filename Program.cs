@@ -93,14 +93,6 @@ namespace FileFinder
                             //Now delete the backup.
                             Console.WriteLine("Deleting the backup");
                             File.Delete(appDirPath + DirNavigationChar + "FileFinder_backup" + AppExtension);
-
-                            //Now start the app again.
-                            ProcessStartInfo startInfo = new ProcessStartInfo();
-                            startInfo.FileName = appDirPath + DirNavigationChar + "FileFinder" + AppExtension;
-                            startInfo.Arguments = "--noUpdate";
-                            startInfo.WorkingDirectory = appDirPath;
-                            startInfo.CreateNoWindow = false;
-                            Process.Start(startInfo);
                         }
                         catch(Exception caughtException)
                         {
