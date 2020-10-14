@@ -74,14 +74,14 @@ namespace FileFinder
                         Console.ForegroundColor = ConsoleColor.Red;
                         Console.WriteLine("Update failed, make sure the app's path doesn't contain spaces!");
                         Console.ResetColor();
-                        Console.WriteLine("Exception:" + caughtException.Message);
+                        Console.WriteLine("Exception: " + caughtException.Message);
                         return;
                     }
 
                     Console.ForegroundColor = ConsoleColor.Green;
-                    Console.WriteLine("Update complete. You may restart the app.");
+                    Console.WriteLine("Update complete. You may restart the app");
                     Console.ForegroundColor = ConsoleColor.DarkGray;
-                    Console.WriteLine("Note: Any leftover update files will not be deleted until the app has been restarted.");
+                    Console.WriteLine("Note: Any leftover update files will not be deleted until the app has been restarted");
                     Console.ResetColor();
                     return;
                 }
@@ -101,9 +101,9 @@ namespace FileFinder
                 catch (Exception caughtException)
                 {
                     Console.ForegroundColor = ConsoleColor.Red;
-                    Console.WriteLine("Temporary directory could not be deleted.");
+                    Console.WriteLine("Temporary directory could not be deleted");
                     Console.ForegroundColor = ConsoleColor.Yellow;
-                    Console.WriteLine($"Delete \"{TempDirectory + DirNavigationChar}FileFinderUpdater\" and restart the app.");
+                    Console.WriteLine($"Delete \"{TempDirectory + DirNavigationChar}FileFinderUpdater\" and restart the app");
                     Console.ResetColor();
                     Console.WriteLine("Exception: " + caughtException.Message);
                     return;
@@ -112,12 +112,12 @@ namespace FileFinder
                 if (Directory.EnumerateDirectories(Directory.GetCurrentDirectory()).Where(a => a.Contains(DirNavigationChar + "obj")).ToList().Count > 0 || Directory.GetCurrentDirectory().Contains(DirNavigationChar + "obj"))
                 {
                     Console.ForegroundColor = ConsoleColor.DarkGray;
-                    Console.WriteLine("App is running in local debug; Skipping update...");
+                    Console.WriteLine("App is running in local debug; Skipping update");
                     Console.ResetColor();
                 }
                 else
                 {
-                    Console.WriteLine("Checking for updates...");
+                    Console.WriteLine("Checking for updates");
                     
                     string[] newReleaseData = GetNewestVersion();
                     int updateLevel = CompareVersions(FileFinderAppVersion, newReleaseData[0]);
@@ -168,7 +168,7 @@ namespace FileFinder
                         try
                         {
                             Console.ForegroundColor = ConsoleColor.DarkGray;
-                            Console.WriteLine("Downloading release...");
+                            Console.WriteLine("Downloading release");
 
                             DownloadFile("https://github.com/GermanBread/FileFinderGit/releases/download/" + newReleaseData[0] + "/FileFinder" + AppExtension, destPath + DirNavigationChar + "FileFinder_updater" + AppExtension);
                             
@@ -181,7 +181,7 @@ namespace FileFinder
                             //Now duplicate the executable to avoid a headache later
                             File.Copy(destPath + DirNavigationChar + "FileFinder_updater" + AppExtension, destPath + DirNavigationChar + "FileFinder" + AppExtension);
 
-                            Console.WriteLine("Starting updater...");
+                            Console.WriteLine("Starting updater");
                             Console.WriteLine("Updater at: " + destPath + DirNavigationChar + "FileFinder_updater" + AppExtension);
                             Console.ResetColor();
                             
@@ -198,20 +198,20 @@ namespace FileFinder
                         catch (Exception caughtException)
                         {
                             Console.ForegroundColor = ConsoleColor.Red;
-                            Console.WriteLine("Error while downloading release.");
+                            Console.WriteLine("Error while downloading release");
                             Console.ForegroundColor = ConsoleColor.Yellow;
                             Console.WriteLine("Download the newest release at: https://github.com/GermanBread/FileFinderGit/releases");
                             Console.ResetColor();
                             Console.WriteLine("Exception: " + caughtException.Message);
                             Console.ForegroundColor = ConsoleColor.DarkGray;
                             Thread.Sleep(2000);
-                            Console.WriteLine("Continuing...");
+                            Console.WriteLine("Continuing");
                             Console.ResetColor();
                         }
                     }
                     else
                     {
-                        Console.WriteLine("This app is up-to-date.");
+                        Console.WriteLine("This app is up-to-date");
                     }
                 }
 
@@ -220,28 +220,23 @@ namespace FileFinder
                 #region Settings manager
 
                 Console.CursorVisible = false;
-                Console.WriteLine("If you don't see a menu appear, restart the app.");
+                Console.WriteLine("If you don't see a menu appear, restart the app");
                 
                 //Settings manager is called here
                 SettingsUI settingsMenu = new SettingsUI();
 
-                //add menu entries
-                //settingsMenu.settings.Add(new SettingsEntry("Paths", SettingsEntry.InteractionType.nonSelectableAndNonInteractable, new List<string>() { "" }, 0));
+                //paths
                 settingsMenu.settings.Add(new SettingsEntry("Source path", SettingsEntry.InteractionType.selectableAndInteractable, new List<string>() { "$Path", ""}, 0, "Path to the files you want sorted i.e. \"Family_pictures\""));
                 settingsMenu.settings.Add(new SettingsEntry("Destination path", SettingsEntry.InteractionType.selectableAndInteractable, new List<string>() { "$Path", "" }, 0, "Path to the destination folder i.e. \"Family_pictures_sorted\""));
-                //settingsMenu.settings.Add(new SettingsEntry("Testpath", SettingsEntry.InteractionType.selectableAndInteractable, new List<string>() { "$Input", "" }, 0));
-                
+                //options
                 settingsMenu.settings.Add(new SettingsEntry("", SettingsEntry.InteractionType.nonSelectableAndNonInteractable, new List<string>() { "" }, 0));
-                //settingsMenu.settings.Add(new SettingsEntry("Files", SettingsEntry.InteractionType.nonSelectableAndNonInteractable, new List<string>() { "" }, 0));
-
                 settingsMenu.settings.Add(new SettingsEntry("Should filenames be changed?", SettingsEntry.InteractionType.selectableAndInteractable, new List<string>() { "No, do not change the name", "Add date only", "Add date and iterator" }, 2));
                 settingsMenu.settings.Add(new SettingsEntry("Should files be sorted?", SettingsEntry.InteractionType.selectableAndInteractable, new List<string>() { "No", "Yes" }, 1));
                 settingsMenu.settings.Add(new SettingsEntry("Should duplicates be overwritten?", SettingsEntry.InteractionType.selectableAndInteractable, new List<string>() { "No, always keep the duplicate", "Only overwrite if source file is newer", "Only overwrite if source file is older", "Yes, always overwrite the duplicate" }, 1));
-                //settingsMenu.settings.Add(new SettingsEntry("Create a directory to copy the files to?", SettingsEntry.InteractionType.selectableAndInteractable, new List<string>() { "No", "Yes" }, 0));
-                
                 settingsMenu.settings.Add(new SettingsEntry("", SettingsEntry.InteractionType.nonSelectableAndNonInteractable, new List<string>() { "" }, 0));
                 settingsMenu.settings.Add(new SettingsEntry("", SettingsEntry.InteractionType.selectableAndInteractable, new List<string>() { "$Done" }, 0));
 
+                //loop until the user presses "DONE"
                 while (!settingsMenu.DrawSettings("FileFinder settings manager " + FileFinderAppVersion));
                 
                 //variables that depend on the settings manager
@@ -270,7 +265,7 @@ namespace FileFinder
                 } 
                 catch 
                 {
-                    Console.WriteLine("Logdir creation: The programm encountered a severe error and cannot continue.");
+                    Console.WriteLine("Logdir creation: The programm encountered a severe error and cannot continue");
                     Console.CursorVisible = true;
                     return;
                 }
@@ -293,7 +288,7 @@ namespace FileFinder
                     } 
                     catch 
                     {
-                        Console.WriteLine("Logfile creation: The programm encountered a severe error and cannot continue.");
+                        Console.WriteLine("Logfile creation: The programm encountered a severe error and cannot continue");
                         Console.CursorVisible = true;
                         return;
                     }
@@ -475,7 +470,7 @@ namespace FileFinder
                 Console.BackgroundColor = ConsoleColor.DarkGray;
                 Console.Write(BarGraph(i + 1, FilePaths.Count, 20));
                 Console.ResetColor(); 
-                Console.WriteLine(" " + (i + 1) + " out of " + FilePaths.Count + " files copied.");
+                Console.WriteLine(" " + (i + 1) + " out of " + FilePaths.Count + " files copied");
                 
                 //determine the time the image was shot
                 string fileShotTime = null;
@@ -712,7 +707,7 @@ namespace FileFinder
                     bruteForcedJSON.Add(rawData.Where(a => a.Contains("\"tag_name\"")).First());
                     bruteForcedJSON.Add(rawData.Where(a => a.Contains("\"name\"")).First());
                     bruteForcedJSON.Add(rawData.Where(a => a.Contains("\"body\"")).First());
-                    
+
                     versionNumber = RemoveTrailingChar(bruteForcedJSON[0].Split(':')[1], '\"');
                     versionName = RemoveTrailingChar(bruteForcedJSON[1].Split(':')[1], '\"');
                     versionDescription = RemoveTrailingChar(RemoveTrailingChar(bruteForcedJSON[2].Split(':')[1], '}'), '\"');
