@@ -79,9 +79,9 @@ namespace FileFinder
                     }
 
                     Console.ForegroundColor = ConsoleColor.Green;
-                    Console.WriteLine("Update complete. You may close this window and restart the app.");
+                    Console.WriteLine("Update complete. You may restart the app.");
                     Console.ForegroundColor = ConsoleColor.DarkGray;
-                    Console.WriteLine("Note: Any leftover files will not be deleted until the app has been restarted.");
+                    Console.WriteLine("Note: Any leftover update files will not be deleted until the app has been restarted.");
                     Console.ResetColor();
                     return;
                 }
@@ -112,20 +112,20 @@ namespace FileFinder
                 if (Directory.EnumerateDirectories(Directory.GetCurrentDirectory()).Where(a => a.Contains(DirNavigationChar + "obj")).ToList().Count > 0 || Directory.GetCurrentDirectory().Contains(DirNavigationChar + "obj"))
                 {
                     Console.ForegroundColor = ConsoleColor.DarkGray;
-                    Console.WriteLine("App is running in local debug or updating is disabled; Skipping...");
+                    Console.WriteLine("App is running in local debug; Skipping update...");
                     Console.ResetColor();
                 }
                 else
                 {
                     Console.WriteLine("Checking for updates...");
                     
-                    string newReleaseVersion = GetNewestVersion();
-                    int updateLevel = CompareVersions(FileFinderAppVersion, newReleaseVersion);
+                    string[] newReleaseData = GetNewestVersion();
+                    int updateLevel = CompareVersions(FileFinderAppVersion, newReleaseData[0]);
                     //See method "CompareVersions" for more details.
                     //Here's how "update levels" work:
                     //0 = same version >>> do nothing
-                    //1 = minor update >>> update
-                    //2 = normal update >>> update
+                    //1 = patch >>> update
+                    //2 = minor update >>> update
                     //3 = major update >>> update
 
                     //The code below executes if an update has been found. In other words: If the current version is older than the newer one...
@@ -137,19 +137,28 @@ namespace FileFinder
                         switch (updateLevel)
                         {
                             case 1:
-                                Console.Write("Minor update: ");
+                                Console.Write("Patch: ");
                                 break;
 
                             case 2:
-                                Console.Write("Medium update: ");
+                                Console.Write("Minor update: ");
                                 break;
 
                             case 3:
                                 Console.Write("Major update: ");
                                 break;
                         }
+                        Console.ForegroundColor = ConsoleColor.White;
+                        Console.WriteLine(FileFinderAppVersion + " >> " + newReleaseData[0]);
+                        Console.ForegroundColor = ConsoleColor.DarkGray;
+                        Console.Write("Release name: ");
+                        Console.ForegroundColor = ConsoleColor.White;
+                        Console.WriteLine(newReleaseData[1]);
+                        Console.ForegroundColor = ConsoleColor.DarkGray;
+                        Console.Write("Release description: ");
+                        Console.ForegroundColor = ConsoleColor.White;
+                        Console.WriteLine(newReleaseData[2]);
                         Console.ResetColor();
-                        Console.WriteLine(FileFinderAppVersion + " >> " + newReleaseVersion);
 
                         string destPath = TempDirectory + DirNavigationChar + "FileFinderUpdater";
                         
@@ -161,7 +170,7 @@ namespace FileFinder
                             Console.ForegroundColor = ConsoleColor.DarkGray;
                             Console.WriteLine("Downloading release...");
 
-                            DownloadFile("https://github.com/GermanBread/FileFinderGit/releases/download/" + newReleaseVersion + "/FileFinder" + AppExtension, destPath + DirNavigationChar + "FileFinder_updater" + AppExtension);
+                            DownloadFile("https://github.com/GermanBread/FileFinderGit/releases/download/" + newReleaseData[0] + "/FileFinder" + AppExtension, destPath + DirNavigationChar + "FileFinder_updater" + AppExtension);
                             
                             //The following step is neccessary for UNIX machines because files require "execute permissions"
                             if (IsUNIX)
@@ -679,9 +688,11 @@ namespace FileFinder
         
         #region Program Methods
         
-        static string GetNewestVersion()
+        static string[] GetNewestVersion()
         {
             string versionNumber = "";
+            string versionName = "";
+            string versionDescription = "";
             char[] validChars = new char[] { '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '.', 'v'};
             
             var webRequest = WebRequest.Create("https://api.github.com/repos/GermanBread/FileFinderGit/releases/latest") as HttpWebRequest;
@@ -694,16 +705,22 @@ namespace FileFinder
                 using (var sr = new StreamReader(s))
                 {
                     var answer = sr.ReadToEnd();
-                    //I'm too lazy to deal with this JSON stuff, let's just brute force it
-                    string[] bruteForcedJSON = answer.Split(',');
-                    bruteForcedJSON = bruteForcedJSON.Where(a => a.Contains("tag_name")).ToArray();
-                    versionNumber = new string(bruteForcedJSON[0].ToCharArray().Where(a => validChars.Contains(a)).ToArray());
+                    //I'm too lazy to deal with this JSON stuff, let's just bruteForcedJSON force it
+                    string[] rawData = answer.Split(',');
+                    List<string> bruteForcedJSON = new List<string>();
+                    bruteForcedJSON.Add(rawData.Where(a => a.Contains("\"tag_name\"")).First());
+                    bruteForcedJSON.Add(rawData.Where(a => a.Contains("\"name\"")).First());
+                    bruteForcedJSON.Add(rawData.Where(a => a.Contains("\"body\"")).First());
+                    versionNumber = RemoveTrailingChar(bruteForcedJSON[0].Split(':')[1], '\"');
+                    versionName = RemoveTrailingChar(bruteForcedJSON[1].Split(':')[1], '\"');
+                    versionDescription = RemoveTrailingChar(RemoveTrailingChar(bruteForcedJSON[2].Split(':')[1], '}'), '\"');
+                    
                     sr.Close();
                     sr.Dispose();
                 }
             }
             
-            return versionNumber;
+            return new string[] { versionNumber, versionName, versionDescription };
         }
         
         //Source: https://gist.github.com/nboubakr/7812375
@@ -769,13 +786,31 @@ namespace FileFinder
             return;
         }
         
-        static int CompareVersions(string first, string second)
+        static string RemoveTrailingChar(string input, char character)
+        {
+            string output = "";
+            List<char> charArrayInput = input.ToCharArray().ToList();
+            List<char> charArrayOutput = new List<char>();
+            
+            for (int i = 0; i < charArrayInput.Count; i++)
+            {
+                if ((i != 0 || i != charArrayInput.Count) && charArrayInput[i] == character)
+                {
+                    continue;
+                }
+                charArrayOutput.Add(charArrayInput[i]);
+            }
+            output = new string(charArrayOutput.ToArray());
+            return output;
+        }
+        
+        static int CompareVersions(string currentVersion, string newVersion)
         {
             char[] validVersionChars = new char[] { '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '.'};
             char[] validIntChars = new char[] { '1', '2', '3', '4', '5', '6', '7', '8', '9', '0'};
 
-            string firstFiltered = new string(first.ToCharArray().Where((a) => validVersionChars.Contains(a)).ToArray());
-            string secondFiltered = new string(second.ToCharArray().Where((a) => validVersionChars.Contains(a)).ToArray());
+            string firstFiltered = new string(currentVersion.ToCharArray().Where((a) => validVersionChars.Contains(a)).ToArray());
+            string secondFiltered = new string(newVersion.ToCharArray().Where((a) => validVersionChars.Contains(a)).ToArray());
 
             List<int> firstSplit = new List<int>();
             foreach (var item in firstFiltered.Split('.'))
