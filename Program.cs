@@ -705,12 +705,14 @@ namespace FileFinder
                 using (var sr = new StreamReader(s))
                 {
                     var answer = sr.ReadToEnd();
-                    //I'm too lazy to deal with this JSON stuff, let's just bruteForcedJSON force it
+                    //I'm too lazy to deal with this JSON stuff, let's just brute force it
                     string[] rawData = answer.Split(',');
                     List<string> bruteForcedJSON = new List<string>();
+
                     bruteForcedJSON.Add(rawData.Where(a => a.Contains("\"tag_name\"")).First());
                     bruteForcedJSON.Add(rawData.Where(a => a.Contains("\"name\"")).First());
                     bruteForcedJSON.Add(rawData.Where(a => a.Contains("\"body\"")).First());
+                    
                     versionNumber = RemoveTrailingChar(bruteForcedJSON[0].Split(':')[1], '\"');
                     versionName = RemoveTrailingChar(bruteForcedJSON[1].Split(':')[1], '\"');
                     versionDescription = RemoveTrailingChar(RemoveTrailingChar(bruteForcedJSON[2].Split(':')[1], '}'), '\"');
@@ -827,8 +829,8 @@ namespace FileFinder
             int updateLevel = 0;
             //Here's how "update levels" work:
             //0 = same version >>> do nothing
-            //1 = minor update >>> update
-            //2 = normal update >>> update
+            //1 = patch >>> update
+            //2 = minor update >>> update
             //3 = major update >>> update
 
             //compare versions            
