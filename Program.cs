@@ -27,7 +27,7 @@ namespace FileFinder
                 bool IsInTEMP = Directory.GetCurrentDirectory().Contains(TempDirectory);
                 List<string> FilePaths = new List<string>();
                 List<Exception> ExceptionsThrown = new List<Exception>();
-                string FileFinderAppVersion = "v1.1.1";
+                string FileFinderAppVersion = "v1.2.0";
                 string AppExtension = IsUNIX ? ".x86-64" : ".exe";
 
                 #endregion
@@ -42,178 +42,227 @@ namespace FileFinder
 
                 #endregion
                 
+                #region Help argument
+
+                //show all possible arguments
+                if (args.Contains("-h") || args.Contains("--help"))
+                {
+                    Console.ForegroundColor = ConsoleColor.Green;
+                    Console.WriteLine("Available arguments:");
+                    //"--forceUpdate" help
+                    Console.ForegroundColor = ConsoleColor.White;
+                    Console.Write("--forceUpdate vX.X.X " );
+                    Console.ForegroundColor = ConsoleColor.DarkGray;
+                    Console.WriteLine("Forces an update to the specified version. Example: --forceUpdate v1.1.1");
+                    //"--noUpdate" help
+                    Console.ForegroundColor = ConsoleColor.White;
+                    Console.Write("--noUpdate " );
+                    Console.ForegroundColor = ConsoleColor.DarkGray;
+                    Console.WriteLine("Skips the updating");
+                    Console.ResetColor();
+                    return;
+                }
+
+                #endregion
+
                 #region Self-update
                 
-                if (IsInTEMP)
-                {
-                    if (args.Length == 0)
+                    #region Updating
+
+                    if (IsInTEMP)
                     {
-                        Console.WriteLine("The temp directory is reserved for the updater!");
+                        if (args.Length == 0)
+                        {
+                            Console.WriteLine("The temp directory is reserved for the updater!");
+                            return;
+                        }
+                        
+                        string appDirPath = args[0];
+                        
+                        Console.ForegroundColor = ConsoleColor.DarkGray;
+                        Console.WriteLine("Preparing");
+                        
+                        try
+                        {
+                            //Instead of deleting the application instantly, make a backup.
+                            Console.WriteLine("Making backup");
+                            File.Move(appDirPath + DirNavigationChar + "FileFinder" + AppExtension, appDirPath + DirNavigationChar + "FileFinder_backup" + AppExtension);
+                            Console.WriteLine("Replacing executable with downloaded version");
+                            File.Move(Directory.GetCurrentDirectory() + DirNavigationChar + "FileFinder" + AppExtension, appDirPath + DirNavigationChar + "FileFinder" + AppExtension);
+
+                            //Now delete the backup.
+                            Console.WriteLine("Deleting the backup");
+                            File.Delete(appDirPath + DirNavigationChar + "FileFinder_backup" + AppExtension);
+                        }
+                        catch(Exception caughtException)
+                        {
+                            Console.ForegroundColor = ConsoleColor.Red;
+                            Console.WriteLine("Update failed, make sure the app's path doesn't contain spaces!");
+                            Console.ResetColor();
+                            Console.WriteLine("Exception: " + caughtException.Message);
+                            return;
+                        }
+
+                        Console.ForegroundColor = ConsoleColor.Green;
+                        Console.WriteLine("Update complete. You may restart the app");
+                        Console.ForegroundColor = ConsoleColor.DarkGray;
+                        Console.WriteLine("Note: Any leftover update files will not be deleted until the app has been restarted");
+                        Console.ResetColor();
                         return;
                     }
-                    
-                    string appDirPath = args[0];
-                    
-                    Console.ForegroundColor = ConsoleColor.DarkGray;
-                    Console.WriteLine("Preparing");
+
+                    #endregion
+                
+                    #region TEMP deletion
                     
                     try
                     {
-                        //Instead of deleting the application instantly, make a backup.
-                        Console.WriteLine("Making backup");
-                        File.Move(appDirPath + DirNavigationChar + "FileFinder" + AppExtension, appDirPath + DirNavigationChar + "FileFinder_backup" + AppExtension);
-                        Console.WriteLine("Replacing executable with downloaded version");
-                        File.Move(Directory.GetCurrentDirectory() + DirNavigationChar + "FileFinder" + AppExtension, appDirPath + DirNavigationChar + "FileFinder" + AppExtension);
-
-                        //Now delete the backup.
-                        Console.WriteLine("Deleting the backup");
-                        File.Delete(appDirPath + DirNavigationChar + "FileFinder_backup" + AppExtension);
+                        //Get a list of files and delete them.
+                        if (Directory.Exists(TempDirectory + DirNavigationChar + "FileFinderUpdater"))
+                        {
+                            foreach (var file in Directory.EnumerateFiles(TempDirectory + DirNavigationChar + "FileFinderUpdater"))
+                            {
+                                File.Delete(file);
+                            }
+                            Directory.Delete(TempDirectory + DirNavigationChar + "FileFinderUpdater");
+                        }
                     }
-                    catch(Exception caughtException)
+                    catch (Exception caughtException)
                     {
                         Console.ForegroundColor = ConsoleColor.Red;
-                        Console.WriteLine("Update failed, make sure the app's path doesn't contain spaces!");
+                        Console.WriteLine("Temporary directory could not be deleted");
+                        Console.ForegroundColor = ConsoleColor.Yellow;
+                        Console.WriteLine($"Delete \"{TempDirectory + DirNavigationChar}FileFinderUpdater\" and restart the app");
                         Console.ResetColor();
                         Console.WriteLine("Exception: " + caughtException.Message);
                         return;
                     }
 
-                    Console.ForegroundColor = ConsoleColor.Green;
-                    Console.WriteLine("Update complete. You may restart the app");
-                    Console.ForegroundColor = ConsoleColor.DarkGray;
-                    Console.WriteLine("Note: Any leftover update files will not be deleted until the app has been restarted");
-                    Console.ResetColor();
-                    return;
-                }
-                
-                try
-                {
-                    //Get a list of files and delete them.
-                    if (Directory.Exists(TempDirectory + DirNavigationChar + "FileFinderUpdater"))
+                    #endregion
+
+                    #region Update searching and downloading
+
+                    if (Directory.EnumerateDirectories(Directory.GetCurrentDirectory()).Where(a => a.Contains(DirNavigationChar + "obj")).ToList().Count > 0 || Directory.GetCurrentDirectory().Contains(DirNavigationChar + "obj"))
                     {
-                        foreach (var file in Directory.EnumerateFiles(TempDirectory + DirNavigationChar + "FileFinderUpdater"))
-                        {
-                            File.Delete(file);
-                        }
-                        Directory.Delete(TempDirectory + DirNavigationChar + "FileFinderUpdater");
-                    }
-                }
-                catch (Exception caughtException)
-                {
-                    Console.ForegroundColor = ConsoleColor.Red;
-                    Console.WriteLine("Temporary directory could not be deleted");
-                    Console.ForegroundColor = ConsoleColor.Yellow;
-                    Console.WriteLine($"Delete \"{TempDirectory + DirNavigationChar}FileFinderUpdater\" and restart the app");
-                    Console.ResetColor();
-                    Console.WriteLine("Exception: " + caughtException.Message);
-                    return;
-                }
-
-                if (Directory.EnumerateDirectories(Directory.GetCurrentDirectory()).Where(a => a.Contains(DirNavigationChar + "obj")).ToList().Count > 0 || Directory.GetCurrentDirectory().Contains(DirNavigationChar + "obj"))
-                {
-                    Console.ForegroundColor = ConsoleColor.DarkGray;
-                    Console.WriteLine("App is running in local debug; Skipping update");
-                    Console.ResetColor();
-                }
-                else
-                {
-                    Console.WriteLine("Checking for updates");
-                    
-                    string[] newReleaseData = GetNewestVersion();
-                    int updateLevel = CompareVersions(FileFinderAppVersion, newReleaseData[0]);
-                    //See method "CompareVersions" for more details.
-                    //Here's how "update levels" work:
-                    //0 = same version >>> do nothing
-                    //1 = patch >>> update
-                    //2 = minor update >>> update
-                    //3 = major update >>> update
-
-                    //The code below executes if an update has been found. In other words: If the current version is older than the newer one...
-                    if (updateLevel > 0)
-                    {
-                        Console.ForegroundColor = ConsoleColor.Green;
-                        Console.Write("Update found! ");
                         Console.ForegroundColor = ConsoleColor.DarkGray;
-                        switch (updateLevel)
-                        {
-                            case 1:
-                                Console.Write("Patch: ");
-                                break;
-
-                            case 2:
-                                Console.Write("Minor update: ");
-                                break;
-
-                            case 3:
-                                Console.Write("Major update: ");
-                                break;
-                        }
-                        Console.ForegroundColor = ConsoleColor.White;
-                        Console.WriteLine(FileFinderAppVersion + " >> " + newReleaseData[0]);
-                        Console.ForegroundColor = ConsoleColor.DarkGray;
-                        Console.Write("Release name: ");
-                        Console.ForegroundColor = ConsoleColor.White;
-                        Console.WriteLine(newReleaseData[1]);
-                        Console.ForegroundColor = ConsoleColor.DarkGray;
-                        Console.Write("Release description: ");
-                        Console.ForegroundColor = ConsoleColor.White;
-                        Console.WriteLine(newReleaseData[2]);
+                        Console.WriteLine("App is running in local debug; Skipping update");
                         Console.ResetColor();
-
-                        string destPath = TempDirectory + DirNavigationChar + "FileFinderUpdater";
-                        
-                        Directory.CreateDirectory(destPath);
-
-                        //download the files
-                        try
-                        {
-                            Console.ForegroundColor = ConsoleColor.DarkGray;
-                            Console.WriteLine("Downloading release");
-
-                            DownloadFile("https://github.com/GermanBread/FileFinderGit/releases/download/" + newReleaseData[0] + "/FileFinder" + AppExtension, destPath + DirNavigationChar + "FileFinder_updater" + AppExtension);
-                            
-                            //The following step is neccessary for UNIX machines because files require "execute permissions"
-                            if (IsUNIX)
-                            {
-                                RunInBash("chmod +x " + destPath + DirNavigationChar + "FileFinder_updater" + AppExtension);
-                            }
-
-                            //Now duplicate the executable to avoid a headache later
-                            File.Copy(destPath + DirNavigationChar + "FileFinder_updater" + AppExtension, destPath + DirNavigationChar + "FileFinder" + AppExtension);
-
-                            Console.WriteLine("Starting updater");
-                            Console.WriteLine("Updater at: " + destPath + DirNavigationChar + "FileFinder_updater" + AppExtension);
-                            Console.ResetColor();
-                            
-                            //Now start a thread which will replace the main thread.
-                            ProcessStartInfo startInfo = new ProcessStartInfo();
-                            startInfo.FileName = destPath + DirNavigationChar + "FileFinder" + AppExtension;
-                            startInfo.Arguments = "\"" + Directory.GetCurrentDirectory() + "\"";
-                            startInfo.WorkingDirectory = destPath;
-                            startInfo.CreateNoWindow = false;
-                            Process.Start(startInfo);
-                            
-                            return;
-                        }
-                        catch (Exception caughtException)
-                        {
-                            Console.ForegroundColor = ConsoleColor.Red;
-                            Console.WriteLine("Error while downloading release");
-                            Console.ForegroundColor = ConsoleColor.Yellow;
-                            Console.WriteLine("Download the newest release at: https://github.com/GermanBread/FileFinderGit/releases");
-                            Console.ResetColor();
-                            Console.WriteLine("Exception: " + caughtException.Message);
-                            Console.ForegroundColor = ConsoleColor.DarkGray;
-                            Thread.Sleep(2000);
-                            Console.WriteLine("Continuing");
-                            Console.ResetColor();
-                        }
                     }
                     else
                     {
-                        Console.WriteLine("This app is up-to-date");
+                        //If I don't do this it will crash
+                        bool isUpdateForced = false;
+                        if (args.Length >= 2)
+                        {
+                            isUpdateForced = args.Contains("--forceUpdate") && args[Array.IndexOf(args, "--forceUpdate") + 1][0] == 'v';
+                        }
+                        bool noUpdate = args.Contains("--noUpdate") && args.Length >= 1;
+                        
+                        Console.WriteLine("Checking for updates");
+                        
+                        string[] newReleaseData = GetNewestVersion();
+                        int updateLevel = CompareVersions(FileFinderAppVersion, newReleaseData[0]);
+
+                        //only execute if the update is forced
+                        if (isUpdateForced)
+                        {
+                            newReleaseData = new string[] { args[Array.IndexOf(args, "--forceUpdate") + 1], "Forced-update", "No description" };
+                        }
+                        //See method "CompareVersions" for more details.
+                        //Here's how "update levels" work:
+                        //0 = same version >>> do nothing
+                        //1 = patch >>> update
+                        //2 = minor update >>> update
+                        //3 = major update >>> update
+
+                        //The code below executes if an update has been found. In other words: If the current version is older than the newer one...
+                        if ((updateLevel > 0 || isUpdateForced) && !noUpdate)
+                        {
+                            Console.ForegroundColor = ConsoleColor.Green;
+                            Console.Write("Update found! ");
+                            Console.ForegroundColor = ConsoleColor.DarkGray;
+                            switch (updateLevel)
+                            {
+                                case 1:
+                                    Console.Write("Patch: ");
+                                    break;
+
+                                case 2:
+                                    Console.Write("Minor update: ");
+                                    break;
+
+                                case 3:
+                                    Console.Write("Major update: ");
+                                    break;
+                            }
+                            Console.ForegroundColor = ConsoleColor.White;
+                            Console.WriteLine(FileFinderAppVersion + " >> " + newReleaseData[0]);
+                            Console.ForegroundColor = ConsoleColor.DarkGray;
+                            Console.Write("Release name: ");
+                            Console.ForegroundColor = ConsoleColor.White;
+                            Console.WriteLine(newReleaseData[1]);
+                            Console.ForegroundColor = ConsoleColor.DarkGray;
+                            Console.Write("Release description: ");
+                            Console.ForegroundColor = ConsoleColor.White;
+                            Console.WriteLine(newReleaseData[2]);
+                            Console.ResetColor();
+
+                            string destPath = TempDirectory + DirNavigationChar + "FileFinderUpdater";
+                            
+                            Directory.CreateDirectory(destPath);
+
+                            //download the files
+                            try
+                            {
+                                Console.ForegroundColor = ConsoleColor.DarkGray;
+                                Console.WriteLine("Downloading release");
+
+                                DownloadFile("https://github.com/GermanBread/FileFinderGit/releases/download/" + newReleaseData[0] + "/FileFinder" + AppExtension, destPath + DirNavigationChar + "FileFinder_updater" + AppExtension);
+                                
+                                //The following step is neccessary for UNIX machines because files require "execute permissions"
+                                if (IsUNIX)
+                                {
+                                    RunInBash("chmod +x " + destPath + DirNavigationChar + "FileFinder_updater" + AppExtension);
+                                }
+
+                                //Now duplicate the executable to avoid a headache later
+                                File.Copy(destPath + DirNavigationChar + "FileFinder_updater" + AppExtension, destPath + DirNavigationChar + "FileFinder" + AppExtension);
+
+                                Console.WriteLine("Starting updater");
+                                Console.WriteLine("Updater at: " + destPath + DirNavigationChar + "FileFinder_updater" + AppExtension);
+                                Console.ResetColor();
+                                
+                                //Now start a thread which will replace the main thread.
+                                ProcessStartInfo startInfo = new ProcessStartInfo();
+                                startInfo.FileName = destPath + DirNavigationChar + "FileFinder" + AppExtension;
+                                startInfo.Arguments = "\"" + Directory.GetCurrentDirectory() + "\"";
+                                startInfo.WorkingDirectory = destPath;
+                                startInfo.CreateNoWindow = false;
+                                Process.Start(startInfo);
+                                
+                                return;
+                            }
+                            catch (Exception caughtException)
+                            {
+                                Console.ForegroundColor = ConsoleColor.Red;
+                                Console.WriteLine("Error while downloading release");
+                                Console.ForegroundColor = ConsoleColor.Yellow;
+                                Console.WriteLine("Download the newest release at: https://github.com/GermanBread/FileFinderGit/releases");
+                                Console.ResetColor();
+                                Console.WriteLine("Exception: " + caughtException.Message);
+                                Console.ForegroundColor = ConsoleColor.DarkGray;
+                                Thread.Sleep(2000);
+                                Console.WriteLine("Continuing");
+                                Console.ResetColor();
+                            }
+                        }
+                        else
+                        {
+                            Console.WriteLine("This app is up-to-date");
+                        }
                     }
-                }
+
+                    #endregion
 
                 #endregion
 
