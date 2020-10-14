@@ -27,7 +27,7 @@ namespace FileFinder
                 bool IsInTEMP = Directory.GetCurrentDirectory().Contains(TempDirectory);
                 List<string> FilePaths = new List<string>();
                 List<Exception> ExceptionsThrown = new List<Exception>();
-                string FileFinderAppVersion = "v1.2.1";
+                string FileFinderAppVersion = "v1.2.0";
                 string AppExtension = IsUNIX ? ".x86-64" : ".exe";
 
                 #endregion
