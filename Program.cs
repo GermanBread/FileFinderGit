@@ -27,7 +27,7 @@ namespace FileFinder
                 bool IsInTEMP = Directory.GetCurrentDirectory().Contains(TempDirectory);
                 List<string> FilePaths = new List<string>();
                 List<Exception> ExceptionsThrown = new List<Exception>();
-                string FileFinderAppVersion = "v1.2.0";
+                string FileFinderAppVersion = "v1.2.1";
                 string AppExtension = IsUNIX ? ".x86-64" : ".exe";
 
                 #endregion
@@ -67,7 +67,7 @@ namespace FileFinder
 
                 #region Self-update
                 
-                    #region Updating
+                    #region Updating and starting the main app
 
                     if (IsInTEMP)
                     {
@@ -93,6 +93,14 @@ namespace FileFinder
                             //Now delete the backup.
                             Console.WriteLine("Deleting the backup");
                             File.Delete(appDirPath + DirNavigationChar + "FileFinder_backup" + AppExtension);
+
+                            //Now start the app again.
+                            ProcessStartInfo startInfo = new ProcessStartInfo();
+                            startInfo.FileName = appDirPath + DirNavigationChar + "FileFinder" + AppExtension;
+                            startInfo.Arguments = "--noUpdate";
+                            startInfo.WorkingDirectory = appDirPath;
+                            startInfo.CreateNoWindow = false;
+                            Process.Start(startInfo);
                         }
                         catch(Exception caughtException)
                         {
@@ -234,8 +242,8 @@ namespace FileFinder
                                 
                                 //Now start a thread which will replace the main thread.
                                 ProcessStartInfo startInfo = new ProcessStartInfo();
-                                startInfo.FileName = destPath + DirNavigationChar + "FileFinder" + AppExtension;
-                                startInfo.Arguments = "\"" + Directory.GetCurrentDirectory() + "\"";
+                                startInfo.FileName = destPath + DirNavigationChar + "FileFinder_updater" + AppExtension;
+                                startInfo.Arguments = Directory.GetCurrentDirectory();
                                 startInfo.WorkingDirectory = destPath;
                                 startInfo.CreateNoWindow = false;
                                 Process.Start(startInfo);
