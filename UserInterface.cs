@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.IO;
 
-namespace User_Interface
+namespace UserInterface
 {
     public class SettingsEntry
     {
@@ -128,13 +128,15 @@ namespace User_Interface
                 
                 //reset the color even if the setting was not highlighted
                 Console.ResetColor();
-                
+
+                //show a separator for the description
+                Console.SetCursorPosition(0, Console.WindowHeight - 3);
+                Console.Write(loopString("-", Console.WindowWidth) + "\n");                               
+
                 //show description of selected element
                 if (settingsElement.StrDescription != null && settingsElement == settings[selectedSetting])
                 {
-                    Console.ForegroundColor = ConsoleColor.DarkGray;
-                    Console.Write(" Description: " + settingsElement.StrDescription);
-                    Console.ResetColor();
+                    Console.Write("Description: " + settingsElement.StrDescription);
                 }
             }
 
@@ -195,7 +197,7 @@ namespace User_Interface
                             settings[selectedSetting].StrValueLabels[1] = fe.path;
                             if (fe.path.Length == 0)
                             {
-                                settings[selectedSetting].StrValueLabels[1] = "undefined";
+                                settings[selectedSetting].StrValueLabels[1] = "";
                             }
                         }
                         break;
@@ -211,19 +213,30 @@ namespace User_Interface
             return isDone;
         }
 
-        private string UserInput()
+        private string UserInput(string Title = "Enter value", string InputFieldStyle = "Input> ")
         {
             Console.Clear();
-            Console.WriteLine("Enter value");
-            Console.WriteLine("-----------");
-            Console.Write("Input> ");
+            Console.WriteLine(Title);
+            Console.WriteLine(loopString("-", Console.WindowWidth));
+            Console.Write(InputFieldStyle);
             return Console.ReadLine();
         }
 
-        class FileExplorer
+        private string loopString(string input, int loopAmount)
+        {
+            string outputString = "";
+            for (int i = 0; i < loopAmount; i++)
+            {
+                outputString += input;
+            }
+            return outputString;
+        }
+
+        public class FileExplorer
         {
             public string path;
             private int selection;
+            private bool showHidden = false;
             //get a filtered list of all drives
             private List<DriveInfo> drives = new List<DriveInfo>();
             private List<string> paths = new List<string>();
@@ -248,18 +261,29 @@ namespace User_Interface
                 bool isDone = false;
 
                 Console.Clear();
-                Console.ForegroundColor = ConsoleColor.Yellow;
-                Console.WriteLine("[ESC] quit and save");
-                Console.WriteLine("[Enter] down");
-                Console.WriteLine("[Backspace] list drives");
+                Console.ForegroundColor = ConsoleColor.DarkGray;
+                Console.WriteLine("[Enter] go down a directory");
+                Console.WriteLine("[Backspace] go up a directory");
                 Console.WriteLine("[Arrow keys] move up and down");
+                Console.WriteLine("[Insert] create a directory");
+                Console.WriteLine("[Delete] delete a directory");
+                //Console.WriteLine("[F12] toggle \"show hidden\"");
+                Console.WriteLine("[ESC] quit and save path");
                 Console.ResetColor();
                 Console.WriteLine();
                 Console.WriteLine("Select path");
                 Console.WriteLine();
-                //remove drives
-
+                
+                //remove hidden directories
+                if (!showHidden)
+                {
+                    //paths = paths.Where(a => new DirectoryInfo(a).Attributes != FileAttributes.Hidden).ToList();
+                }
                 //add option to go up
+                if (!paths.Contains("[Go up]"))
+                {
+                    paths.Add("[Go up]");
+                }
                 if (!paths.Contains("[Go to top]"))
                 {
                     paths.Add("[Go to top]");
@@ -319,6 +343,10 @@ namespace User_Interface
                             {
                                 Console.WriteLine(" Go to drive selection");
                             }
+                            else if (paths[selection] == "[Go up]")
+                            {
+                                Console.WriteLine(" Go up a directory");
+                            }
                             else
                             {
                                 Console.WriteLine(" Unable to get directories");
@@ -342,6 +370,18 @@ namespace User_Interface
                         selection--;
                         break;
 
+                    case ConsoleKey.Home:
+                        selection = 0;
+                        break;
+                    
+                    case ConsoleKey.End:
+                        selection = paths.Count - 1;
+                        break;
+                    
+                    case ConsoleKey.F12:
+                        showHidden = !showHidden;
+                        break;
+
                     case ConsoleKey.Enter:
                         if (paths[selection] == "[Go to top]")
                         {
@@ -352,10 +392,28 @@ namespace User_Interface
                                 paths.Add(drive.Name);
                             }
                         }
+                        else if (paths[selection] == "[Go up]")
+                        {
+                            //clear paths and list the directories
+                            try
+                            {
+                                paths = Directory.GetDirectories(Directory.GetParent(path).FullName).ToList();
+                                path = Directory.GetParent(path).FullName;
+                            }
+                            catch
+                            {
+                                paths.Clear();
+                                foreach (var drive in drives)
+                                {
+                                    paths.Add(drive.Name);
+                                }
+                            }
+                        }
                         else
                         {
                             try
                             {
+                                path = paths[selection];
                                 paths = Directory.GetDirectories(paths[selection]).ToList();
                             }
                             catch (Exception)
@@ -366,18 +424,94 @@ namespace User_Interface
                         break;
 
                     case ConsoleKey.Backspace:
-                        //clear paths and list the disks
-                        paths.Clear();
-                        foreach (var drive in drives)
+                        //clear paths and list the directories
+                        try
                         {
-                            paths.Add(drive.Name);
+                            paths = Directory.GetDirectories(Directory.GetParent(path).FullName).ToList();
+                            path = Directory.GetParent(path).FullName;
+                        }
+                        catch
+                        {
+                            paths.Clear();
+                            foreach (var drive in drives)
+                            {
+                                paths.Add(drive.Name);
+                            }
+                        }
+                        break;
+
+                    case ConsoleKey.Insert:
+                        //if the user chose to create a folder
+                        SettingsUI SUI = new SettingsUI();
+                        string directoryName = SUI.UserInput("Enter directory name", path + Path.DirectorySeparatorChar);
+                        Prompts PRcreate = new Prompts();
+                        if (PRcreate.SelectionPrompt("Confirm creation of " + directoryName, "", new string[] { "No", "Yes" }) == 1)
+                        {
+                            try
+                            {
+                                Directory.CreateDirectory(path + Path.DirectorySeparatorChar + directoryName);
+                            }
+                            catch (UnauthorizedAccessException)
+                            {
+                                Console.Clear();
+                                Console.WriteLine("Creation: Missing permissions!");
+                                System.Threading.Thread.Sleep(1000);
+                            }
+                            catch (Exception)
+                            {
+                                Console.Clear();
+                                Console.WriteLine("Creation: Unknown error");
+                                System.Threading.Thread.Sleep(1000);
+                            }
+                        }
+                        //rebuild list
+                        paths = Directory.GetDirectories(path).ToList();
+                        break;
+
+                    case ConsoleKey.Delete:
+                        //before anything gets executed, check if the path is valid in the first place
+                        if (paths[selection] == "[Go to top]" || paths[selection] == "[Go up]")
+                        {
+                            break;
+                        }
+                        //check passed, now execute this
+                        Prompts PRdelete = new Prompts();
+                        if (PRdelete.SelectionPrompt("Confirm deletion of " + paths[selection], Directory.GetFiles(paths[selection], "*", SearchOption.AllDirectories).Length > 0 ? "WARNING: This directory contains files!" : "", new string[] { "No", "Yes" }) == 1)
+                        {
+                            try
+                            {
+                                //delete files
+                                foreach (var file in Directory.GetFiles(paths[selection], "*", SearchOption.AllDirectories))
+                                {
+                                    File.Delete(file);
+                                }
+                                //delete directories
+                                foreach (var directory in Directory.GetDirectories(paths[selection], "*", SearchOption.AllDirectories))
+                                {
+                                    Directory.Delete(directory);
+                                }
+                                Directory.Delete(paths[selection]);
+                                paths = Directory.GetDirectories(path).ToList();
+                            }
+                            catch (UnauthorizedAccessException)
+                            {
+                                Console.Clear();
+                                Console.WriteLine("Deletion: Missing permissions!");
+                                System.Threading.Thread.Sleep(1000);
+                            }
+                            catch (Exception)
+                            {
+                                Console.Clear();
+                                Console.WriteLine("Deletion: Unknown error");
+                                System.Threading.Thread.Sleep(1000);
+                            }
                         }
                         break;
 
                     case ConsoleKey.Escape:
                         path = paths[selection];
                         //if the selected setting ends up being "[Go up]"
-                        if (path == "[Go to top]")
+                        if (path == "[Go to top]" || path == "[Go up]")
                         {
                             path = "";
                         }
@@ -396,6 +530,63 @@ namespace User_Interface
                 }
                 return isDone;
             }
+        }
+    }
+
+    public class Prompts
+    {
+        public int SelectionPrompt(string Title, string Description, string[] Options, int DefaultSelection = 0)
+        {
+            int selection = DefaultSelection;
+            bool isDone = false;
+            while (!isDone)
+            {
+                Console.Clear();
+                Console.SetCursorPosition(5, 5);
+                Console.Write(Title);
+                Console.SetCursorPosition(6, 6);
+                Console.Write(Description);
+                Console.SetCursorPosition(8, 8);
+                for (int i = 0; i < Options.Length; i++)
+                {
+                    string option = Options[i];
+                    Console.BackgroundColor = i == selection ? ConsoleColor.White : ConsoleColor.Black;
+                    Console.ForegroundColor = i == selection ? ConsoleColor.Black : ConsoleColor.White;
+                    Console.Write(option);
+                    Console.ResetColor();
+                    if (i < Options.Length - 1)
+                    {
+                        Console.Write(" - ");
+                    }
+                }
+                switch (Console.ReadKey().Key)
+                {
+                    case ConsoleKey.LeftArrow:
+                        selection--;
+                        break;
+
+                    case ConsoleKey.RightArrow:
+                        selection++;
+                        break;
+
+                    case ConsoleKey.Enter:
+                        isDone = true;
+                        break;
+
+                    default:
+                        break;
+                }
+                //Because "selection %= Options.Lenght" works completely different than what I expect
+                if (selection >= Options.Length)
+                {
+                    selection = 0;
+                }
+                else if (selection < 0)
+                {
+                    selection = Options.Length - 1;
+                }
+            }
+            return selection;
         }
     }
 }

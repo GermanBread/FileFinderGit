@@ -7,7 +7,7 @@ using System.Diagnostics;
 using System.Net;
 using MetadataExtractor.Formats.Exif;
 using MetadataExtractor.Formats.Xmp;
-using User_Interface;
+using UserInterface;
 
 namespace FileFinder
 {
@@ -16,7 +16,7 @@ namespace FileFinder
         static void Main(string[] args)
         {             
             #region Program Setup
-              
+                
                 #region Variables
                 
                 //variables that don't depend on the settings manager
@@ -27,7 +27,7 @@ namespace FileFinder
                 bool IsInTEMP = Directory.GetCurrentDirectory().Contains(TempDirectory);
                 List<string> FilePaths = new List<string>();
                 List<Exception> ExceptionsThrown = new List<Exception>();
-                string FileFinderAppVersion = "v1.2.0";
+                string FileFinderAppVersion = "v1.3.0";
                 string AppExtension = IsUNIX ? ".x86-64" : ".exe";
 
                 #endregion
@@ -193,6 +193,10 @@ namespace FileFinder
 
                                 case 3:
                                     Console.Write("Major update: ");
+                                    break;
+
+                                default:
+                                    Console.Write("Downgrade or reinstall");
                                     break;
                             }
                             Console.ForegroundColor = ConsoleColor.White;
@@ -878,11 +882,11 @@ namespace FileFinder
             //3 = major update >>> update
 
             //compare versions            
-            if (firstSplit[0] == secondSplit[0])
+            if (firstSplit[0] >= secondSplit[0])
             {
-                if (firstSplit[1] == secondSplit[1])
+                if (firstSplit[1] >= secondSplit[1])
                 {
-                    if (firstSplit[2] == secondSplit[2])
+                    if (firstSplit[2] >= secondSplit[2])
                     {
                         updateLevel = 0;
                     }
