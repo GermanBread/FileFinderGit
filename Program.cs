@@ -202,11 +202,13 @@ namespace FileFinder
                             Console.ForegroundColor = ConsoleColor.White;
                             Console.WriteLine(FileFinderAppVersion + " >> " + newReleaseData[0]);
                             Console.ForegroundColor = ConsoleColor.DarkGray;
-                            Console.Write("Release name: ");
+                            Console.WriteLine();
+                            Console.WriteLine("Release name: ");
                             Console.ForegroundColor = ConsoleColor.White;
                             Console.WriteLine(newReleaseData[1]);
                             Console.ForegroundColor = ConsoleColor.DarkGray;
-                            Console.Write("Release description: ");
+                            Console.WriteLine();
+                            Console.WriteLine("Release description: ");
                             Console.ForegroundColor = ConsoleColor.White;
                             Console.WriteLine(newReleaseData[2]);
                             Console.ResetColor();
@@ -763,7 +765,8 @@ namespace FileFinder
 
                     versionNumber = RemoveTrailingChar(bruteForcedJSON[0].Split(':')[1], '\"');
                     versionName = RemoveTrailingChar(bruteForcedJSON[1].Split(':')[1], '\"');
-                    versionDescription = RemoveTrailingChar(RemoveTrailingChar(bruteForcedJSON[2].Split(':')[1], '}'), '\"');
+                    string cleanBrute = RemoveTrailingChar(RemoveTrailingChar(bruteForcedJSON[2].Split(':', 2)[1], '}'), '\"');
+                    versionDescription = cleanBrute.Replace("\\r\\n", "\n");
                     
                     sr.Close();
                     sr.Dispose();
