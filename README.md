@@ -1,3 +1,7 @@
+[![CodeFactor](https://www.codefactor.io/repository/github/germanbread/filefindergit/badge/master)](https://www.codefactor.io/repository/github/germanbread/filefindergit/overview/master)
+<br>
+![Last commit](https://img.shields.io/github/last-commit/GermanBread/FileFinderGit)
+
 # File Finder
 
 Project intended to make it easy to find files scattered across your drives.
