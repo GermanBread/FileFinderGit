@@ -1,3 +1,5 @@
+[![GitHub release]]()
+
 # File Finder
 
 Project intended to make it easy to find files scattered across your drives.
