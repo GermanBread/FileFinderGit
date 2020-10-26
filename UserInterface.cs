@@ -247,7 +247,6 @@ namespace UserInterface
             }
             public bool FileExplorerWindow()
             {
-                
                 //variables
                 bool isDone = false;
 
@@ -526,7 +525,6 @@ namespace UserInterface
                         }
                         isDone = true;
                         break;
-                    
                 }
                 //clamp selection
                 try

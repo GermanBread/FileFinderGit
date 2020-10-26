@@ -298,7 +298,7 @@ namespace FileFinder
                 settingsMenu.settings.Add(new SettingsEntry("", SettingsEntry.InteractionType.selectableAndInteractable, new List<string>() { "$Done" }, 0));
 
                 //loop until the user presses "DONE"
-                while (!settingsMenu.DrawSettings("FileFinder settings manager " + FileFinderAppVersion));
+                while (!settingsMenu.DrawSettings("FileFinder settings manager " + FileFinderAppVersion)) {}
                 
                 //variables that depend on the settings manager
                 string Path = settingsMenu.settings[0].StrValueLabels[1];
@@ -933,7 +933,7 @@ namespace FileFinder
             float ratio = (float)value / (float)maxValue;
             for (float i = 0; i < width; i++)
             {
-                output += format[(int)Math.Clamp(ratio * format.Length * width - i * format.Length, 0, format.Length - 1)];
+                output += format[(int)Math.Clamp(((ratio * format.Length) * width) - (i * format.Length), 0, format.Length - 1)];
             }
             return output;
         }
