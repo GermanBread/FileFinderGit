@@ -188,7 +188,7 @@ namespace UserInterface
                         }
                         else if (currentSetting.StrValueLabels[0] == "$Input" && isSettingInteractable)
                         {
-                            currentSetting.StrValueLabels[1] = UserInput();
+                            currentSetting.StrValueLabels[1] = new Prompts().UserInput();
                         }
                         else if (currentSetting.StrValueLabels[0] == "$Path" && isSettingInteractable)
                         {
@@ -211,15 +211,6 @@ namespace UserInterface
             
             //return if the done button has been pressed
             return isDone;
-        }
-
-        private string UserInput(string Title = "Enter value", string InputFieldStyle = "Input> ")
-        {
-            Console.Clear();
-            Console.WriteLine(Title);
-            Console.WriteLine(loopString("-", Console.WindowWidth));
-            Console.Write(InputFieldStyle);
-            return Console.ReadLine();
         }
 
         private string loopString(string input, int loopAmount)
@@ -261,7 +252,7 @@ namespace UserInterface
                 bool isDone = false;
 
                 Console.Clear();
-                Console.ForegroundColor = ConsoleColor.DarkGray;
+                Console.ForegroundColor = ConsoleColor.Yellow;
                 Console.WriteLine("[Enter] go down a directory");
                 Console.WriteLine("[Backspace] go up a directory");
                 Console.WriteLine("[Arrow keys] move up and down");
@@ -271,8 +262,13 @@ namespace UserInterface
                 Console.WriteLine("[ESC] quit and save path");
                 Console.ResetColor();
                 Console.WriteLine();
-                Console.WriteLine("Select path");
+                Console.BackgroundColor = ConsoleColor.White;
+                Console.ForegroundColor = ConsoleColor.Black;
+                Console.Write(paths[selection]);
+                Console.ResetColor();
+                Console.WriteLine(" will be the path selected");
                 Console.WriteLine();
+                Console.WriteLine("Select path:");
                 
                 //remove hidden directories
                 if (!showHidden)
@@ -303,12 +299,24 @@ namespace UserInterface
                     
                     try
                     {
+                        //highlight the selected object
                         if (i == selection)
                         {
                             Console.ForegroundColor = ConsoleColor.Black;
-                            Console.BackgroundColor = ConsoleColor.White;
+                            Console.BackgroundColor = ConsoleColor.DarkGray;
                         }
-                        Console.WriteLine(paths[i]);
+                        string[] splitpath = paths[i].Split(Path.DirectorySeparatorChar);
+                        //write every path up until the element before the last one
+                        for (int j = 0; j < splitpath.Length - 1; j++)
+                        {
+                            Console.Write(splitpath[j] + Path.DirectorySeparatorChar);
+                        }
+                        //change the color
+                        if (i == selection) 
+                        { 
+                            Console.BackgroundColor = ConsoleColor.White; 
+                        }
+                        Console.WriteLine(splitpath[splitpath.Length - 1]);
                         Console.ResetColor();
                         Console.ForegroundColor = ConsoleColor.DarkGray;
                         try
@@ -325,7 +333,8 @@ namespace UserInterface
                                 //list subdirectories
                                 foreach (var directory in tempSubDirectories)
                                 {
-                                    Console.WriteLine(" " + directory);
+                                    string dirname = directory.Split(Path.DirectorySeparatorChar).TakeLast(1).ToArray()[0];
+                                    Console.WriteLine(" " + dirname);
                                 }
                             }
                         }
@@ -443,9 +452,9 @@ namespace UserInterface
                     case ConsoleKey.Insert:
                         //if the user chose to create a folder
                         SettingsUI SUI = new SettingsUI();
-                        string directoryName = SUI.UserInput("Enter directory name", path + Path.DirectorySeparatorChar);
-                        Prompts PRcreate = new Prompts();
-                        if (PRcreate.SelectionPrompt("Confirm creation of " + directoryName, "", new string[] { "No", "Yes" }) == 1)
+                        Prompts PR = new Prompts();
+                        string directoryName = PR.UserInput("Enter directory name", path + Path.DirectorySeparatorChar);
+                        if (PR.SelectionPrompt("Confirm creation of " + directoryName, "", new string[] { "No", "Yes" }) == 1)
                         {
                             try
                             {
@@ -535,6 +544,15 @@ namespace UserInterface
 
     public class Prompts
     {
+        public string UserInput(string Title = "Enter value", string InputFieldStyle = "Input> ")
+        {
+            Console.Clear();
+            Console.WriteLine(Title);
+            Console.WriteLine(loopString("-", Console.WindowWidth));
+            Console.Write(InputFieldStyle);
+            return Console.ReadLine();
+        }
+        
         public int SelectionPrompt(string Title, string Description, string[] Options, int DefaultSelection = 0)
         {
             int selection = DefaultSelection;
@@ -587,6 +605,16 @@ namespace UserInterface
                 }
             }
             return selection;
+        }
+
+        private string loopString(string input, int loopAmount)
+        {
+            string outputString = "";
+            for (int i = 0; i < loopAmount; i++)
+            {
+                outputString += input;
+            }
+            return outputString;
         }
     }
 }

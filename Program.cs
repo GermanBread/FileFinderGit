@@ -27,11 +27,17 @@ namespace FileFinder
                 bool IsInTEMP = Directory.GetCurrentDirectory().Contains(TempDirectory);
                 List<string> FilePaths = new List<string>();
                 List<Exception> ExceptionsThrown = new List<Exception>();
-                string FileFinderAppVersion = "v1.3.0";
+                string FileFinderAppVersion = "v1.3.2";
                 string AppExtension = IsUNIX ? ".x86-64" : ".exe";
 
                 #endregion
 
+                #region Interrupt signal handler
+
+                Console.CancelKeyPress += new ConsoleCancelEventHandler(appCancel);
+
+                #endregion
+                
                 #region Failsafe
                 
                 //Exit if the programm isn't running in a console window!
@@ -150,8 +156,8 @@ namespace FileFinder
                     }
                     else
                     {
-                        //If I don't do this it will crash
                         bool isUpdateForced = false;
+                        //If I don't do this it will crash
                         if (args.Length >= 2)
                         {
                             isUpdateForced = args.Contains("--forceUpdate") && args[Array.IndexOf(args, "--forceUpdate") + 1][0] == 'v';
@@ -738,6 +744,14 @@ namespace FileFinder
         
         #region Program Methods
         
+        static void appCancel(object sender, ConsoleCancelEventArgs cancelEvents)
+        {
+            Console.SetCursorPosition(0, 0);
+            Console.WriteLine("Exiting");
+            Console.CursorVisible = true;
+            return;
+        }
+
         static string[] GetNewestVersion()
         {
             string versionNumber = "";

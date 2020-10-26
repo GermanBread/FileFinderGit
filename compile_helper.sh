@@ -21,7 +21,7 @@ printf "\n";
 #Repeat only if the user hasn't entered an integer...
 while ! [[ $selection =~ ^[0-9]+$ ]]; 
 do
-    read selection;
+    read -r selection;
     clear;
     #if the entered value was not an integer, show this
     if ! [[ $selection =~ ^[0-9]+$ ]]; then
