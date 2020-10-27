@@ -340,7 +340,7 @@ namespace FileFinder
                 catch (IOException ioException) 
                 {
                     Console.ForegroundColor = ConsoleColor.Red;
-                    Console.WriteLine("Logfile creation: Whoops, looks like something went wrong when creating a log file! Trying again!");
+                    Console.WriteLine("Something went wrong when creating a log file");
                     Console.ResetColor();
                     ExceptionsThrown.Add(ioException);
                     try 
@@ -349,17 +349,13 @@ namespace FileFinder
                     } 
                     catch 
                     {
-                        Console.WriteLine("Logfile creation: The programm encountered a severe error and cannot continue");
+                        Console.WriteLine("Logfile creation: Logfile could not be created");
                         Console.CursorVisible = true;
                         return;
                     }
                 }
 
                 #endregion
-
-            //initialize the console ... again (just in case)
-            Console.Clear();
-            Console.SetCursorPosition(0, 0);
 
                 #region Legacy code
                 

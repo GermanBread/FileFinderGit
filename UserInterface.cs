@@ -96,6 +96,7 @@ namespace UserInterface
                     }
                     else if (settingsElement.StrValueLabels[0] == "$Input")
                     {
+                        //if the variable is not empty, display it
                         if (settingsElement.StrValueLabels[1].Length > 0)
                         {
                             Console.Write("<" + settingsElement.StrValueLabels[1].ToString() + ">");
@@ -107,6 +108,7 @@ namespace UserInterface
                     }
                     else if (settingsElement.StrValueLabels[0] == "$Path")
                     {
+                        //if the variable is not empty, display it
                         if (settingsElement.StrValueLabels[1].Length > 0)
                         {
                             Console.Write("<" + settingsElement.StrValueLabels[1].ToString() + ">");
@@ -233,7 +235,7 @@ namespace UserInterface
             private List<string> paths = new List<string>();
             public FileExplorer()
             {
-                //set the drives
+                //get a list of drives that are NOT ramdisks
                 drives = DriveInfo.GetDrives().ToList().Where(a => 
                 a.DriveType.Equals(DriveType.Fixed)
                  || a.DriveType.Equals(DriveType.Removable)
@@ -270,10 +272,12 @@ namespace UserInterface
                 Console.WriteLine("Select path:");
                 
                 //remove hidden directories
+                /*
                 if (!showHidden)
                 {
-                    //paths = paths.Where(a => new DirectoryInfo(a).Attributes != FileAttributes.Hidden).ToList();
+                    paths = paths.Where(a => new DirectoryInfo(a).Attributes != FileAttributes.Hidden).ToList();
                 }
+                */
                 //add option to go up
                 if (!paths.Contains("[Go up]"))
                 {
@@ -341,10 +345,6 @@ namespace UserInterface
                         {
                             Console.WriteLine(" Unable to get directories due to missing permissions");
                         }
-                        catch (PathTooLongException)
-                        {
-                            Console.WriteLine(" Unable to get directories due to a path that is too long");
-                        }
                         catch (Exception)
                         {
                             if (paths[selection] == "[Go to top]")
@@ -357,13 +357,13 @@ namespace UserInterface
                             }
                             else
                             {
-                                Console.WriteLine(" Unable to get directories");
+                                Console.WriteLine(" Unable to get subdirectories");
                             }
                         }
                     }
                     catch (Exception)
                     {
-                        Console.WriteLine("Unable to get drive name");
+                        Console.WriteLine("Unable to get directories");
                     }
                     Console.ResetColor();
                 }
@@ -465,10 +465,11 @@ namespace UserInterface
                                 Console.WriteLine("Creation: Missing permissions!");
                                 System.Threading.Thread.Sleep(1000);
                             }
-                            catch (Exception)
+                            catch (Exception a)
                             {
                                 Console.Clear();
                                 Console.WriteLine("Creation: Unknown error");
+                                Console.WriteLine(a.Message);
                                 System.Threading.Thread.Sleep(1000);
                             }
                         }
@@ -507,10 +508,11 @@ namespace UserInterface
                                 Console.WriteLine("Deletion: Missing permissions!");
                                 System.Threading.Thread.Sleep(1000);
                             }
-                            catch (Exception)
+                            catch (Exception a)
                             {
                                 Console.Clear();
                                 Console.WriteLine("Deletion: Unknown error");
+                                Console.WriteLine(a.Message);
                                 System.Threading.Thread.Sleep(1000);
                             }
                         }

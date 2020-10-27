@@ -4,8 +4,8 @@
 
 # File Finder
 
-Project intended to make it easy to find files scattered across your drives.
-Includes basic UI and sorting.
+A project intended to make it easy to find files scattered across drives.
+This project contains a `UserInterface.cs` file which has been written with other projects in mind.
 
 Written in C# using .NET Core 3.1.107.
 
@@ -16,13 +16,13 @@ TBC
 
 Linux: 
 In terminal run: `git clone https://github.com/GermanBread/FileFinderGit`.
-Then cd into the "FileFinderGit" folder, execute `./build\ script.sh`, select a runtime and wait for it to compile!
+Then cd into the `FileFinderGit` folder, execute `bash compile_helper.sh`, select a runtime and wait for it to compile!
 
-## To launch the app:
+## Starting the application:
 
 Windows: 
-In the Application's folder shift-click on empty space in Explorer-window and select "Open Powershell".
-Then type ".\FileFinder.exe" and press Enter.
+In the Application's folder shift-click on empty space in Explorer-window and select `Open Powershell`.
+Then type `.\FileFinder.exe` and press Enter.
 
 **Important note:** Double clicking the app does not allow it to properly update.
 
