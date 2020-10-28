@@ -27,6 +27,6 @@ Then type `.\FileFinder.exe` and press Enter.
 **Important note:** Double clicking the app does not allow it to properly update.
 
 Linux: 
-Open Terminal, cd into the compiled application's folder, type "./FileFinder.x86-64" and press enter.
+Open Terminal, cd into the compiled application's folder, type `./FileFinder.x86-64` and press enter.
 
-**Important note:** Do not click "run in *xyz*" that does not allow the app to properly update.
+**Important note:** Do not click `run in *xyz*` that does not allow the app to properly update.

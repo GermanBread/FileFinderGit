@@ -46,6 +46,11 @@ namespace FileFinder
                     return;
                 }
 
+                if (Environment.UserName == "root")
+                {
+                    Console.WriteLine("Startup: App is being run as root");
+                }
+
                 #endregion
                 
                 #region Help argument
@@ -79,38 +84,38 @@ namespace FileFinder
                     {
                         if (args.Length == 0)
                         {
-                            Console.WriteLine("The temp directory is reserved for the updater!");
+                            Console.WriteLine("Updater: The temp directory is reserved for the updater!");
                             return;
                         }
                         
                         string appDirPath = args[0];
                         
                         Console.ForegroundColor = ConsoleColor.DarkGray;
-                        Console.WriteLine("Preparing");
+                        Console.WriteLine("Updater: Preparing");
                         
                         try
                         {
                             //Instead of deleting the application instantly, make a backup.
-                            Console.WriteLine("Making backup");
+                            Console.WriteLine("Updater: Making backup");
                             File.Move(appDirPath + DirNavigationChar + "FileFinder" + AppExtension, appDirPath + DirNavigationChar + "FileFinder_backup" + AppExtension);
-                            Console.WriteLine("Replacing executable with downloaded version");
+                            Console.WriteLine("Updater: Replacing executable with downloaded version");
                             File.Move(Directory.GetCurrentDirectory() + DirNavigationChar + "FileFinder" + AppExtension, appDirPath + DirNavigationChar + "FileFinder" + AppExtension);
 
                             //Now delete the backup.
-                            Console.WriteLine("Deleting the backup");
+                            Console.WriteLine("Updater: Deleting the backup");
                             File.Delete(appDirPath + DirNavigationChar + "FileFinder_backup" + AppExtension);
                         }
                         catch(Exception caughtException)
                         {
                             Console.ForegroundColor = ConsoleColor.Red;
-                            Console.WriteLine("Update failed, make sure the app's path doesn't contain spaces!");
+                            Console.WriteLine("Updater: Update failed, make sure the app's path doesn't contain spaces!");
                             Console.ResetColor();
                             Console.WriteLine("Exception: " + caughtException.Message);
                             return;
                         }
 
                         Console.ForegroundColor = ConsoleColor.Green;
-                        Console.WriteLine("Update complete. You may restart the app");
+                        Console.WriteLine("Updater: Update complete. You may restart the app");
                         Console.ForegroundColor = ConsoleColor.DarkGray;
                         Console.WriteLine("Note: Any leftover update files will not be deleted until the app has been restarted");
                         Console.ResetColor();
@@ -136,9 +141,9 @@ namespace FileFinder
                     catch (Exception caughtException)
                     {
                         Console.ForegroundColor = ConsoleColor.Red;
-                        Console.WriteLine("Temporary directory could not be deleted");
+                        Console.WriteLine("Updater: Temporary directory could not be deleted");
                         Console.ForegroundColor = ConsoleColor.Yellow;
-                        Console.WriteLine($"Delete \"{TempDirectory + DirNavigationChar}FileFinderUpdater\" and restart the app");
+                        Console.WriteLine($"Updater: Delete \"{TempDirectory + DirNavigationChar}FileFinderUpdater\" and restart the app");
                         Console.ResetColor();
                         Console.WriteLine("Exception: " + caughtException.Message);
                         return;
@@ -151,7 +156,7 @@ namespace FileFinder
                     if (Directory.EnumerateDirectories(Directory.GetCurrentDirectory()).Where(a => a.Contains(DirNavigationChar + "obj")).ToList().Count > 0 || Directory.GetCurrentDirectory().Contains(DirNavigationChar + "obj"))
                     {
                         Console.ForegroundColor = ConsoleColor.DarkGray;
-                        Console.WriteLine("App is running in local debug; Skipping update");
+                        Console.WriteLine("Updater: App is running in local debug; Skipping update");
                         Console.ResetColor();
                     }
                     else
@@ -185,7 +190,7 @@ namespace FileFinder
                         if ((updateLevel > 0 || isUpdateForced) && !noUpdate)
                         {
                             Console.ForegroundColor = ConsoleColor.Green;
-                            Console.Write("Update found! ");
+                            Console.Write("Updater: Update found! ");
                             Console.ForegroundColor = ConsoleColor.DarkGray;
                             switch (updateLevel)
                             {
@@ -227,7 +232,7 @@ namespace FileFinder
                             try
                             {
                                 Console.ForegroundColor = ConsoleColor.DarkGray;
-                                Console.WriteLine("Downloading release");
+                                Console.WriteLine("Updater: Downloading release");
 
                                 DownloadFile("https://github.com/GermanBread/FileFinderGit/releases/download/" + newReleaseData[0] + "/FileFinder" + AppExtension, destPath + DirNavigationChar + "FileFinder_updater" + AppExtension);
                                 
@@ -240,8 +245,8 @@ namespace FileFinder
                                 //Now duplicate the executable to avoid a headache later
                                 File.Copy(destPath + DirNavigationChar + "FileFinder_updater" + AppExtension, destPath + DirNavigationChar + "FileFinder" + AppExtension);
 
-                                Console.WriteLine("Starting updater");
-                                Console.WriteLine("Updater at: " + destPath + DirNavigationChar + "FileFinder_updater" + AppExtension);
+                                Console.WriteLine("Updater: Starting updater");
+                                Console.WriteLine("Updater: Starting " + destPath + DirNavigationChar + "FileFinder_updater" + AppExtension);
                                 Console.ResetColor();
                                 
                                 //Now start a thread which will replace the main thread.
@@ -257,20 +262,20 @@ namespace FileFinder
                             catch (Exception caughtException)
                             {
                                 Console.ForegroundColor = ConsoleColor.Red;
-                                Console.WriteLine("Error while downloading release");
+                                Console.WriteLine("Updater: Error while downloading release");
                                 Console.ForegroundColor = ConsoleColor.Yellow;
-                                Console.WriteLine("Download the newest release at: https://github.com/GermanBread/FileFinderGit/releases");
+                                Console.WriteLine("Updater: Download the newest release at: https://github.com/GermanBread/FileFinderGit/releases");
                                 Console.ResetColor();
                                 Console.WriteLine("Exception: " + caughtException.Message);
                                 Console.ForegroundColor = ConsoleColor.DarkGray;
                                 Thread.Sleep(2000);
-                                Console.WriteLine("Continuing");
+                                Console.WriteLine("Updater: Continuing");
                                 Console.ResetColor();
                             }
                         }
                         else
                         {
-                            Console.WriteLine("This app is up-to-date");
+                            Console.WriteLine("Updater: This app is up-to-date");
                         }
                     }
 
@@ -281,7 +286,7 @@ namespace FileFinder
                 #region Settings manager
 
                 Console.CursorVisible = false;
-                Console.WriteLine("If you don't see a menu appear, restart the app");
+                Console.WriteLine("Startup: If you don't see a menu appear, restart the app");
                 
                 //Settings manager is called here
                 SettingsUI settingsMenu = new SettingsUI();
@@ -743,7 +748,9 @@ namespace FileFinder
         static void appCancel(object sender, ConsoleCancelEventArgs cancelEvents)
         {
             Console.SetCursorPosition(0, 0);
-            Console.WriteLine("Exiting");
+            Console.WriteLine("                        ");
+            Console.WriteLine("       [ Exited ]       ");
+            Console.WriteLine("                        ");
             Console.CursorVisible = true;
             return;
         }

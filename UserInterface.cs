@@ -194,10 +194,10 @@ namespace UserInterface
                         }
                         else if (currentSetting.StrValueLabels[0] == "$Path" && isSettingInteractable)
                         {
-                            FileExplorer fe = new FileExplorer();
-                            while (!fe.FileExplorerWindow());
-                            settings[selectedSetting].StrValueLabels[1] = fe.path;
-                            if (fe.path.Length == 0)
+                            FileExplorer fe = new FileExplorer(currentSetting.StrValueLabels[1]);
+                            while (!fe.FileExplorerWindow()) {}
+                            currentSetting.StrValueLabels[1] = fe.selectedPath;
+                            if (fe.selectedPath.Length == 0)
                             {
                                 settings[selectedSetting].StrValueLabels[1] = "";
                             }
@@ -205,7 +205,7 @@ namespace UserInterface
                         break;
                 }
             }
-            catch (System.Exception)
+            catch (Exception)
             {
             }
             //clamp "selected setting" just in case :)
@@ -227,24 +227,48 @@ namespace UserInterface
 
         public class FileExplorer
         {
-            public string path;
+            public string selectedPath;
             private int selection;
             private bool showHidden = false;
             //get a filtered list of all drives
             private List<DriveInfo> drives = new List<DriveInfo>();
             private List<string> paths = new List<string>();
-            public FileExplorer()
-            {
+            public FileExplorer(string startingPath = "")
+            {              
                 //get a list of drives that are NOT ramdisks
                 drives = DriveInfo.GetDrives().ToList().Where(a => 
-                a.DriveType.Equals(DriveType.Fixed)
-                 || a.DriveType.Equals(DriveType.Removable)
-                  || a.DriveType.Equals(DriveType.Network)
-                   || a.DriveType.Equals(DriveType.CDRom)).ToList();
+                 a.DriveType.Equals(DriveType.Fixed)
+                  || a.DriveType.Equals(DriveType.Removable)
+                   || a.DriveType.Equals(DriveType.Network)
+                    || a.DriveType.Equals(DriveType.CDRom)).ToList();
                 //add drives to "paths" for first setup
                 foreach (var drive in drives)
                 {
                     paths.Add(drive.Name);
+                }
+
+                //if a path has been provided, use it
+                if (startingPath.Length > 0)
+                {
+                    try
+                    {
+                        selectedPath = Directory.GetParent(startingPath).FullName;
+                        paths = Directory.GetDirectories(selectedPath).ToList();
+                    }
+                    catch (Exception)
+                    {
+                        //get a list of drives that are NOT ramdisks
+                        drives = DriveInfo.GetDrives().ToList().Where(a => 
+                         a.DriveType.Equals(DriveType.Fixed)
+                          || a.DriveType.Equals(DriveType.Removable)
+                           || a.DriveType.Equals(DriveType.Network)
+                            || a.DriveType.Equals(DriveType.CDRom)).ToList();
+                        //add drives to "paths" for first setup
+                        foreach (var drive in drives)
+                        {
+                            paths.Add(drive.Name);
+                        }
+                    }
                 }
             }
             public bool FileExplorerWindow()
@@ -263,11 +287,25 @@ namespace UserInterface
                 Console.WriteLine("[ESC] quit and save path");
                 Console.ResetColor();
                 Console.WriteLine();
-                Console.BackgroundColor = ConsoleColor.White;
-                Console.ForegroundColor = ConsoleColor.Black;
-                Console.Write(paths[selection]);
-                Console.ResetColor();
-                Console.WriteLine(" will be the path selected");
+                try
+                {
+                    if (paths[selection] != "[Go up]" && paths[selection] != "[Go to top]")
+                    {
+                        Console.BackgroundColor = ConsoleColor.White;
+                        Console.ForegroundColor = ConsoleColor.Black;
+                        Console.Write(paths[selection]);
+                        Console.ResetColor();
+                        Console.WriteLine(" will be selected");
+                    }
+                    else
+                    {
+                        Console.WriteLine("No path will be selected");
+                    }
+                }
+                catch (Exception)
+                {
+                    Console.WriteLine("No path will be selected");
+                }
                 Console.WriteLine();
                 Console.WriteLine("Select path:");
                 
@@ -302,13 +340,14 @@ namespace UserInterface
                     
                     try
                     {
+                        //split the path into sections (used for coloring)
+                        string[] splitpath = paths[i].Split(Path.DirectorySeparatorChar);
                         //highlight the selected object
                         if (i == selection)
                         {
                             Console.ForegroundColor = ConsoleColor.Black;
-                            Console.BackgroundColor = ConsoleColor.DarkGray;
+                            Console.BackgroundColor = splitpath.Length > 2 ? ConsoleColor.DarkGray : ConsoleColor.White;
                         }
-                        string[] splitpath = paths[i].Split(Path.DirectorySeparatorChar);
                         //write every path up until the element before the last one
                         for (int j = 0; j < splitpath.Length - 1; j++)
                         {
@@ -405,8 +444,8 @@ namespace UserInterface
                             //clear paths and list the directories
                             try
                             {
-                                paths = Directory.GetDirectories(Directory.GetParent(path).FullName).ToList();
-                                path = Directory.GetParent(path).FullName;
+                                paths = Directory.GetDirectories(Directory.GetParent(selectedPath).FullName).ToList();
+                                selectedPath = Directory.GetParent(selectedPath).FullName;
                             }
                             catch
                             {
@@ -421,7 +460,7 @@ namespace UserInterface
                         {
                             try
                             {
-                                path = paths[selection];
+                                selectedPath = paths[selection];
                                 paths = Directory.GetDirectories(paths[selection]).ToList();
                             }
                             catch (Exception)
@@ -435,8 +474,8 @@ namespace UserInterface
                         //clear paths and list the directories
                         try
                         {
-                            paths = Directory.GetDirectories(Directory.GetParent(path).FullName).ToList();
-                            path = Directory.GetParent(path).FullName;
+                            paths = Directory.GetDirectories(Directory.GetParent(selectedPath).FullName).ToList();
+                            selectedPath = Directory.GetParent(selectedPath).FullName;
                         }
                         catch
                         {
@@ -452,12 +491,12 @@ namespace UserInterface
                         //if the user chose to create a folder
                         SettingsUI SUI = new SettingsUI();
                         Prompts PR = new Prompts();
-                        string directoryName = PR.UserInput("Enter directory name", path + Path.DirectorySeparatorChar);
+                        string directoryName = PR.UserInput("Enter directory name", selectedPath + Path.DirectorySeparatorChar);
                         if (PR.SelectionPrompt("Confirm creation of " + directoryName, "", new string[] { "No", "Yes" }) == 1)
                         {
                             try
                             {
-                                Directory.CreateDirectory(path + Path.DirectorySeparatorChar + directoryName);
+                                Directory.CreateDirectory(selectedPath + Path.DirectorySeparatorChar + directoryName);
                             }
                             catch (UnauthorizedAccessException)
                             {
@@ -474,7 +513,7 @@ namespace UserInterface
                             }
                         }
                         //rebuild list
-                        paths = Directory.GetDirectories(path).ToList();
+                        paths = Directory.GetDirectories(selectedPath).ToList();
                         break;
 
                     case ConsoleKey.Delete:
@@ -500,7 +539,7 @@ namespace UserInterface
                                     Directory.Delete(directory);
                                 }
                                 Directory.Delete(paths[selection]);
-                                paths = Directory.GetDirectories(path).ToList();
+                                paths = Directory.GetDirectories(selectedPath).ToList();
                             }
                             catch (UnauthorizedAccessException)
                             {
@@ -519,11 +558,11 @@ namespace UserInterface
                         break;
 
                     case ConsoleKey.Escape:
-                        path = paths[selection];
+                        selectedPath = paths[selection];
                         //if the selected setting ends up being "[Go up]"
-                        if (path == "[Go to top]" || path == "[Go up]")
+                        if (selectedPath == "[Go to top]" || selectedPath == "[Go up]")
                         {
-                            path = "";
+                            selectedPath = "";
                         }
                         isDone = true;
                         break;
