@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 #quit if the script is not run in a terminal
 if [[ $TERM == dumb ]]; then

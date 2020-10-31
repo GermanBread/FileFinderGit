@@ -247,8 +247,6 @@ namespace FileFinder
                                 string destPath = TempDirectory + DirNavigationChar + "FileFinderUpdater";
                                 Directory.CreateDirectory(destPath);
 
-                                return;
-                                
                                 //download the files
                                 try
                                 {
@@ -766,7 +764,6 @@ namespace FileFinder
         }
         
         #region Classes
-
         
         public class ReleaseData
         {
