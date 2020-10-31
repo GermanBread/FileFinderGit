@@ -27,7 +27,7 @@ namespace FileFinder
                 bool IsInTEMP = Directory.GetCurrentDirectory().Contains(TempDirectory);
                 List<string> FilePaths = new List<string>();
                 List<Exception> ExceptionsThrown = new List<Exception>();
-                string FileFinderAppVersion = "v1.3.2";
+                string FileFinderAppVersion = "v2.0.0";
                 string AppExtension = IsUNIX ? ".x86-64" : ".exe";
 
                 #endregion
@@ -56,35 +56,25 @@ namespace FileFinder
                 #region Help argument
 
                 //show all possible arguments
-                if (args.Contains("-h") || args.Contains("--help"))
+                /*if (args.Contains("-h") || args.Contains("--help"))
                 {
                     Console.ForegroundColor = ConsoleColor.Green;
                     Console.WriteLine("Available arguments:");
-                    //"--forceUpdate" help
-                    Console.ForegroundColor = ConsoleColor.White;
-                    Console.Write("--forceUpdate vX.X.X " );
-                    Console.ForegroundColor = ConsoleColor.DarkGray;
-                    Console.WriteLine("Forces an update to the specified version. Example: --forceUpdate v1.1.1");
-                    //"--noUpdate" help
-                    Console.ForegroundColor = ConsoleColor.White;
-                    Console.Write("--noUpdate " );
-                    Console.ForegroundColor = ConsoleColor.DarkGray;
-                    Console.WriteLine("Skips the updating");
-                    Console.ResetColor();
+                    Console.WriteLine("None");
                     return;
-                }
+                }*/
 
                 #endregion
 
                 #region Self-update
                 
-                    #region Updating and starting the main app
+                    #region Updating
 
                     if (IsInTEMP)
                     {
                         if (args.Length == 0)
                         {
-                            Console.WriteLine("Updater: The temp directory is reserved for the updater!");
+                            Console.WriteLine("Updater: This directory is reserved for the updater!");
                             return;
                         }
                         
@@ -161,121 +151,153 @@ namespace FileFinder
                     }
                     else
                     {
-                        bool isUpdateForced = false;
-                        //If I don't do this it will crash
-                        if (args.Length >= 2)
-                        {
-                            isUpdateForced = args.Contains("--forceUpdate") && args[Array.IndexOf(args, "--forceUpdate") + 1][0] == 'v';
-                        }
-                        bool noUpdate = args.Contains("--noUpdate") && args.Length >= 1;
-                        
                         Console.WriteLine("Checking for updates");
                         
-                        string[] newReleaseData = GetNewestVersion();
-                        int updateLevel = CompareVersions(FileFinderAppVersion, newReleaseData[0]);
+                        //Get all releases
+                        List<ReleaseData> releases = GetReleases("https://api.github.com/repos/GermanBread/FileFinderGit/releases");
 
-                        //only execute if the update is forced
-                        if (isUpdateForced)
-                        {
-                            newReleaseData = new string[] { args[Array.IndexOf(args, "--forceUpdate") + 1], "Forced-update", "No description" };
-                        }
                         //See method "CompareVersions" for more details.
-                        //Here's how "update levels" work:
-                        //0 = same version >>> do nothing
-                        //1 = patch >>> update
-                        //2 = minor update >>> update
-                        //3 = major update >>> update
-
-                        //The code below executes if an update has been found. In other words: If the current version is older than the newer one...
-                        if ((updateLevel > 0 || isUpdateForced) && !noUpdate)
+                        int updateLevel = CompareVersions(FileFinderAppVersion, releases[0].VersionTag);
+                        int selectedVersion = 0;
+                        //If there is a new version, start the update menu
+                        if (updateLevel > 0 || args.Contains("-u"))
                         {
-                            Console.ForegroundColor = ConsoleColor.Green;
-                            Console.Write("Updater: Update found! ");
-                            Console.ForegroundColor = ConsoleColor.DarkGray;
-                            switch (updateLevel)
+                            //This variable is used to initiate the loop
+                            bool firstTime = true;
+                            int action = 0;
+                            while (action == 2 || firstTime)
                             {
-                                case 1:
-                                    Console.Write("Patch: ");
-                                    break;
+                                //The loop has started, now set this variable to false
+                                firstTime = false;
 
-                                case 2:
-                                    Console.Write("Minor update: ");
-                                    break;
-
-                                case 3:
-                                    Console.Write("Major update: ");
-                                    break;
-
-                                default:
-                                    Console.Write("Downgrade or reinstall");
-                                    break;
-                            }
-                            Console.ForegroundColor = ConsoleColor.White;
-                            Console.WriteLine(FileFinderAppVersion + " >> " + newReleaseData[0]);
-                            Console.ForegroundColor = ConsoleColor.DarkGray;
-                            Console.WriteLine();
-                            Console.WriteLine("Release name: ");
-                            Console.ForegroundColor = ConsoleColor.White;
-                            Console.WriteLine(newReleaseData[1]);
-                            Console.ForegroundColor = ConsoleColor.DarkGray;
-                            Console.WriteLine();
-                            Console.WriteLine("Release description: ");
-                            Console.ForegroundColor = ConsoleColor.White;
-                            Console.WriteLine(newReleaseData[2]);
-                            Console.ResetColor();
-
-                            string destPath = TempDirectory + DirNavigationChar + "FileFinderUpdater";
-                            
-                            Directory.CreateDirectory(destPath);
-
-                            //download the files
-                            try
-                            {
-                                Console.ForegroundColor = ConsoleColor.DarkGray;
-                                Console.WriteLine("Updater: Downloading release");
-
-                                DownloadFile("https://github.com/GermanBread/FileFinderGit/releases/download/" + newReleaseData[0] + "/FileFinder" + AppExtension, destPath + DirNavigationChar + "FileFinder_updater" + AppExtension);
+                                //Create a "Prompts" object to be used
+                                Prompts pr = new Prompts();
                                 
-                                //The following step is neccessary for UNIX machines because files require "execute permissions"
-                                if (IsUNIX)
+                                //Ask the user what the programm should do
+                                List<string> options = new List<string>() { "Don't update", "Update", "Select version" };
+                                action = pr.SelectionPrompt("Update found!", "What would you like to do?", options.ToArray(), true, action);
+
+                                //If the user chose to skip or to automatically update, skip
+                                if (action < 2)
                                 {
-                                    RunInBash("chmod +x " + destPath + DirNavigationChar + "FileFinder_updater" + AppExtension);
+                                    break;
                                 }
-
-                                //Now duplicate the executable to avoid a headache later
-                                File.Copy(destPath + DirNavigationChar + "FileFinder_updater" + AppExtension, destPath + DirNavigationChar + "FileFinder" + AppExtension);
-
-                                Console.WriteLine("Updater: Starting updater");
-                                Console.WriteLine("Updater: Starting " + destPath + DirNavigationChar + "FileFinder_updater" + AppExtension);
-                                Console.ResetColor();
                                 
-                                //Now start a thread which will replace the main thread.
-                                ProcessStartInfo startInfo = new ProcessStartInfo();
-                                startInfo.FileName = destPath + DirNavigationChar + "FileFinder_updater" + AppExtension;
-                                startInfo.Arguments = Directory.GetCurrentDirectory();
-                                startInfo.WorkingDirectory = destPath;
-                                startInfo.CreateNoWindow = false;
-                                Process.Start(startInfo);
-                                
-                                return;
+                                //Now, since we know each version's tag, show a prompt
+                                List<string> versionTags = new List<string>() { "[Go back]" };
+                                foreach (var item in releases)
+                                {
+                                    versionTags.Add(item.VersionTag);
+                                }
+                                selectedVersion = pr.SelectionPrompt("Select version", "", versionTags.ToArray(), true, selectedVersion);
+
+                                //If the user chose a version
+                                if (selectedVersion > 0)
+                                {
+                                    break;
+                                }
                             }
-                            catch (Exception caughtException)
+                            //The user chose to update
+                            if (action > 0)
                             {
-                                Console.ForegroundColor = ConsoleColor.Red;
-                                Console.WriteLine("Updater: Error while downloading release");
-                                Console.ForegroundColor = ConsoleColor.Yellow;
-                                Console.WriteLine("Updater: Download the newest release at: https://github.com/GermanBread/FileFinderGit/releases");
-                                Console.ResetColor();
-                                Console.WriteLine("Exception: " + caughtException.Message);
+                                //If the user chose to automatically update, set this
+                                if (action == 1)
+                                {
+                                    selectedVersion = 1;
+                                }
+                                
+                                ReleaseData cutReleaseData = releases[selectedVersion - 1];
+                                updateLevel = CompareVersions(FileFinderAppVersion, cutReleaseData.VersionTag);
+
+                                //The code below executes if an update has been found. In other words: If the current version is older than the newer one...
                                 Console.ForegroundColor = ConsoleColor.DarkGray;
-                                Thread.Sleep(2000);
-                                Console.WriteLine("Updater: Continuing");
+                                switch (updateLevel)
+                                {
+                                    case 1:
+                                        Console.Write("Patch: ");
+                                        break;
+
+                                    case 2:
+                                        Console.Write("Minor update: ");
+                                        break;
+
+                                    case 3:
+                                        Console.Write("Major update: ");
+                                        break;
+
+                                    default:
+                                        Console.Write("Downgrade or reinstall ");
+                                        break;
+                                }
+                                Console.ForegroundColor = ConsoleColor.White;
+                                Console.WriteLine(FileFinderAppVersion + " >> " + cutReleaseData.VersionTag);
+                                Console.ForegroundColor = ConsoleColor.DarkGray;
+                                Console.WriteLine();
+                                Console.WriteLine("Release name: ");
+                                Console.ForegroundColor = ConsoleColor.White;
+                                Console.WriteLine(cutReleaseData.VersionTitle);
+                                Console.ForegroundColor = ConsoleColor.DarkGray;
+                                Console.WriteLine();
+                                Console.WriteLine("Release description: ");
+                                Console.ForegroundColor = ConsoleColor.White;
+                                Console.WriteLine(cutReleaseData.VersionDescription.Replace("\\r\\n", "\n"));
                                 Console.ResetColor();
+
+                                //Create a directory for the updater
+                                string destPath = TempDirectory + DirNavigationChar + "FileFinderUpdater";
+                                Directory.CreateDirectory(destPath);
+
+                                return;
+                                
+                                //download the files
+                                try
+                                {
+                                    Console.ForegroundColor = ConsoleColor.DarkGray;
+                                    Console.WriteLine("Updater: Downloading release");
+
+                                    DownloadFile("https://github.com/GermanBread/FileFinderGit/releases/download/" + cutReleaseData.VersionTag + "/FileFinder" + AppExtension, destPath + DirNavigationChar + "FileFinder_updater" + AppExtension);
+                                    
+                                    //The following step is neccessary for UNIX machines because files require "execute permissions"
+                                    if (IsUNIX)
+                                    {
+                                        RunInBash("chmod +x " + destPath + DirNavigationChar + "FileFinder_updater" + AppExtension);
+                                    }
+
+                                    //Now duplicate the executable to avoid a headache later
+                                    File.Copy(destPath + DirNavigationChar + "FileFinder_updater" + AppExtension, destPath + DirNavigationChar + "FileFinder" + AppExtension);
+
+                                    Console.WriteLine("Updater: Starting updater");
+                                    Console.WriteLine("Updater: Starting " + destPath + DirNavigationChar + "FileFinder_updater" + AppExtension);
+                                    Console.ResetColor();
+                                    
+                                    //Now start a thread which will replace the main thread.
+                                    ProcessStartInfo startInfo = new ProcessStartInfo();
+                                    startInfo.FileName = destPath + DirNavigationChar + "FileFinder_updater" + AppExtension;
+                                    startInfo.Arguments = Directory.GetCurrentDirectory();
+                                    startInfo.WorkingDirectory = destPath;
+                                    startInfo.CreateNoWindow = false;
+                                    Process.Start(startInfo);
+                                    
+                                    return;
+                                }
+                                catch (Exception caughtException)
+                                {
+                                    Console.ForegroundColor = ConsoleColor.Red;
+                                    Console.WriteLine("Updater: Error while downloading release");
+                                    Console.ForegroundColor = ConsoleColor.Yellow;
+                                    Console.WriteLine("Updater: Download the newest release at: https://github.com/GermanBread/FileFinderGit/releases");
+                                    Console.ResetColor();
+                                    Console.WriteLine("Exception: " + caughtException.Message);
+                                    Console.ForegroundColor = ConsoleColor.DarkGray;
+                                    Thread.Sleep(2000);
+                                    Console.WriteLine("Updater: Continuing");
+                                    Console.ResetColor();
+                                }
                             }
                         }
                         else
                         {
-                            Console.WriteLine("Updater: This app is up-to-date");
+                            Console.WriteLine("App is up to date");
                         }
                     }
 
@@ -743,6 +765,24 @@ namespace FileFinder
             #endregion
         }
         
+        #region Classes
+
+        
+        public class ReleaseData
+        {
+            public string VersionTag;
+            public string VersionTitle;
+            public string VersionDescription;
+            public ReleaseData(string stringVerTag, string stringVerTitle, string stringVerDescription)
+            {
+                VersionTag = stringVerTag;
+                VersionTitle = stringVerTitle;
+                VersionDescription = stringVerDescription;
+            }
+        }
+
+        #endregion
+        
         #region Program Methods
         
         static void appCancel(object sender, ConsoleCancelEventArgs cancelEvents)
@@ -755,14 +795,12 @@ namespace FileFinder
             return;
         }
 
-        static string[] GetNewestVersion()
+        static List<ReleaseData> GetReleases(string url)
         {
-            string versionNumber = "";
-            string versionName = "";
-            string versionDescription = "";
             char[] validChars = new char[] { '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '.', 'v'};
+            List<ReleaseData> releases = new List<ReleaseData>();
             
-            var webRequest = WebRequest.Create("https://api.github.com/repos/GermanBread/FileFinderGit/releases/latest") as HttpWebRequest;
+            var webRequest = WebRequest.Create(url) as HttpWebRequest;
 
             webRequest.ContentType = "application/json";
             webRequest.UserAgent = "Nothing";
@@ -775,22 +813,33 @@ namespace FileFinder
                     //I'm too lazy to deal with this JSON stuff, let's just brute force it
                     string[] rawData = answer.Split(',');
                     List<string> bruteForcedJSON = new List<string>();
+                    List<string> tags = new List<string>();
+                    List<string> titles = new List<string>();
+                    List<string> descriptions = new List<string>();
 
-                    bruteForcedJSON.Add(rawData.Where(a => a.Contains("\"tag_name\"")).First());
-                    bruteForcedJSON.Add(rawData.Where(a => a.Contains("\"name\"")).First());
-                    bruteForcedJSON.Add(rawData.Where(a => a.Contains("\"body\"")).First());
+                    tags.AddRange(rawData.Where(a => a.Contains("\"tag_name\"")));
+                    titles.AddRange(rawData.Where(a => a.Contains("\"name\"")));
+                    descriptions.AddRange(rawData.Where(a => a.Contains("\"body\"")));
 
-                    versionNumber = RemoveTrailingChar(bruteForcedJSON[0].Split(':')[1], '\"');
-                    versionName = RemoveTrailingChar(bruteForcedJSON[1].Split(':')[1], '\"');
-                    string cleanBrute = RemoveTrailingChar(RemoveTrailingChar(bruteForcedJSON[2].Split(':', 2)[1], '}'), '\"');
-                    versionDescription = cleanBrute.Replace("\\r\\n", "\n");
+                    titles = titles.Where(a => !a.Contains("FileFinder.exe") && !a.Contains("FileFinder.x86-64")).ToList();
+
+                    for (int r = 0; r < tags.Count; r++)
+                    {
+                        releases.Add(new ReleaseData
+                            (
+                                new string(tags[r].Split(':')[1].Where(a => validChars.Contains(a)).ToArray()),
+                                RemoveTrailingChar(titles[r].Split(':')[1], '\"'),
+                                RemoveTrailingChar(RemoveTrailingChar(RemoveTrailingChar(descriptions[r].Split(':', 2)[1], ']'), '}'), '\"')
+                            )
+                        );
+                    }
                     
                     sr.Close();
                     sr.Dispose();
                 }
             }
             
-            return new string[] { versionNumber, versionName, versionDescription };
+            return releases;
         }
         
         //Source: https://gist.github.com/nboubakr/7812375

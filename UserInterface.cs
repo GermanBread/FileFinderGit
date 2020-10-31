@@ -273,6 +273,8 @@ namespace UserInterface
             }
             public bool FileExplorerWindow()
             {
+                //note: this method is meant to be run in a for-loop
+                
                 //variables
                 bool isDone = false;
 
@@ -287,27 +289,28 @@ namespace UserInterface
                 Console.WriteLine("[ESC] quit and save path");
                 Console.ResetColor();
                 Console.WriteLine();
+                if (paths.Count > 0)
+                {
+                    Console.WriteLine("Select path:");
+                }
+                else
+                {
+                    Console.WriteLine("There seems to be nothing here");
+                }
                 try
                 {
-                    if (paths[selection] != "[Go up]" && paths[selection] != "[Go to top]")
-                    {
-                        Console.BackgroundColor = ConsoleColor.White;
-                        Console.ForegroundColor = ConsoleColor.Black;
-                        Console.Write(paths[selection]);
-                        Console.ResetColor();
-                        Console.WriteLine(" will be selected");
-                    }
-                    else
-                    {
-                        Console.WriteLine("No path will be selected");
-                    }
+                    Console.BackgroundColor = ConsoleColor.White;
+                    Console.ForegroundColor = ConsoleColor.Black;
+                    Console.Write(paths[selection]);
+                    Console.ResetColor();
+                    Console.WriteLine(" will be selected");
                 }
                 catch (Exception)
                 {
+                    Console.ResetColor();
                     Console.WriteLine("No path will be selected");
                 }
                 Console.WriteLine();
-                Console.WriteLine("Select path:");
                 
                 //remove hidden directories
                 /*
@@ -316,16 +319,7 @@ namespace UserInterface
                     paths = paths.Where(a => new DirectoryInfo(a).Attributes != FileAttributes.Hidden).ToList();
                 }
                 */
-                //add option to go up
-                if (!paths.Contains("[Go up]"))
-                {
-                    paths.Add("[Go up]");
-                }
-                if (!paths.Contains("[Go to top]"))
-                {
-                    paths.Add("[Go to top]");
-                }
-                
+
                 //list all the drives
                 for (int i = 0; i < paths.Count; i++)
                 {
@@ -337,7 +331,7 @@ namespace UserInterface
                     {
                         continue;
                     }
-                    
+                    //drawing the elements
                     try
                     {
                         //split the path into sections (used for coloring)
@@ -346,21 +340,26 @@ namespace UserInterface
                         if (i == selection)
                         {
                             Console.ForegroundColor = ConsoleColor.Black;
-                            Console.BackgroundColor = splitpath.Length > 2 ? ConsoleColor.DarkGray : ConsoleColor.White;
+                            Console.BackgroundColor = ConsoleColor.DarkGray;
                         }
                         //write every path up until the element before the last one
                         for (int j = 0; j < splitpath.Length - 1; j++)
                         {
-                            Console.Write(splitpath[j] + Path.DirectorySeparatorChar);
+                            if (j > 0)
+                            {
+                                Console.Write(Path.DirectorySeparatorChar);
+                            }
+                            Console.Write(splitpath[j]);
                         }
                         //change the color
                         if (i == selection) 
                         { 
                             Console.BackgroundColor = ConsoleColor.White; 
                         }
-                        Console.WriteLine(splitpath[splitpath.Length - 1]);
+                        Console.WriteLine(Path.DirectorySeparatorChar + splitpath[splitpath.Length - 1]);
                         Console.ResetColor();
                         Console.ForegroundColor = ConsoleColor.DarkGray;
+                        //what this does is display a list of subdirectories under the selected directory
                         try
                         {
                             if (i == selection)
@@ -380,24 +379,14 @@ namespace UserInterface
                                 }
                             }
                         }
+                        //however, if this fails, display this
                         catch (UnauthorizedAccessException)
                         {
                             Console.WriteLine(" Unable to get directories due to missing permissions");
                         }
                         catch (Exception)
                         {
-                            if (paths[selection] == "[Go to top]")
-                            {
-                                Console.WriteLine(" Go to drive selection");
-                            }
-                            else if (paths[selection] == "[Go up]")
-                            {
-                                Console.WriteLine(" Go up a directory");
-                            }
-                            else
-                            {
-                                Console.WriteLine(" Unable to get subdirectories");
-                            }
+                            Console.WriteLine(" Unable to get subdirectories");
                         }
                     }
                     catch (Exception)
@@ -406,7 +395,7 @@ namespace UserInterface
                     }
                     Console.ResetColor();
                 }
-                
+                Console.ResetColor();
                 switch (Console.ReadKey().Key)
                 {
                     case ConsoleKey.DownArrow:
@@ -430,42 +419,13 @@ namespace UserInterface
                         break;
 
                     case ConsoleKey.Enter:
-                        if (paths[selection] == "[Go to top]")
+                        try
                         {
-                            //clear paths and list the disks
-                            paths.Clear();
-                            foreach (var drive in drives)
-                            {
-                                paths.Add(drive.Name);
-                            }
+                            selectedPath = paths[selection];
+                            paths = Directory.GetDirectories(paths[selection]).ToList();
                         }
-                        else if (paths[selection] == "[Go up]")
+                        catch (Exception)
                         {
-                            //clear paths and list the directories
-                            try
-                            {
-                                paths = Directory.GetDirectories(Directory.GetParent(selectedPath).FullName).ToList();
-                                selectedPath = Directory.GetParent(selectedPath).FullName;
-                            }
-                            catch
-                            {
-                                paths.Clear();
-                                foreach (var drive in drives)
-                                {
-                                    paths.Add(drive.Name);
-                                }
-                            }
-                        }
-                        else
-                        {
-                            try
-                            {
-                                selectedPath = paths[selection];
-                                paths = Directory.GetDirectories(paths[selection]).ToList();
-                            }
-                            catch (Exception)
-                            {
-                            }
                         }
                         selection = 0;
                         break;
@@ -476,6 +436,8 @@ namespace UserInterface
                         {
                             paths = Directory.GetDirectories(Directory.GetParent(selectedPath).FullName).ToList();
                             selectedPath = Directory.GetParent(selectedPath).FullName;
+                            //try to select the element the path in the new list
+                            selection = paths.FindIndex(element => element.Equals(selectedPath));
                         }
                         catch
                         {
@@ -484,6 +446,7 @@ namespace UserInterface
                             {
                                 paths.Add(drive.Name);
                             }
+                            selection = 0;
                         }
                         break;
 
@@ -492,7 +455,7 @@ namespace UserInterface
                         SettingsUI SUI = new SettingsUI();
                         Prompts PR = new Prompts();
                         string directoryName = PR.UserInput("Enter directory name", selectedPath + Path.DirectorySeparatorChar);
-                        if (PR.SelectionPrompt("Confirm creation of " + directoryName, "", new string[] { "No", "Yes" }) == 1)
+                        if (PR.SelectionPrompt("Confirm creation of " + directoryName, "", new string[] { "No", "Yes" }, false) == 1)
                         {
                             try
                             {
@@ -517,14 +480,9 @@ namespace UserInterface
                         break;
 
                     case ConsoleKey.Delete:
-                        //before anything gets executed, check if the path is valid in the first place
-                        if (paths[selection] == "[Go to top]" || paths[selection] == "[Go up]")
-                        {
-                            break;
-                        }
                         //check passed, now execute this
                         Prompts PRdelete = new Prompts();
-                        if (PRdelete.SelectionPrompt("Confirm deletion of " + paths[selection], Directory.GetFiles(paths[selection], "*", SearchOption.AllDirectories).Length > 0 ? "WARNING: This directory contains files!" : "", new string[] { "No", "Yes" }) == 1)
+                        if (PRdelete.SelectionPrompt("Confirm deletion of " + paths[selection], Directory.GetFiles(paths[selection], "*", SearchOption.AllDirectories).Length > 0 ? "WARNING: This directory contains files!" : "", new string[] { "No", "Yes" }, false) == 1)
                         {
                             try
                             {
@@ -558,9 +516,11 @@ namespace UserInterface
                         break;
 
                     case ConsoleKey.Escape:
-                        selectedPath = paths[selection];
-                        //if the selected setting ends up being "[Go up]"
-                        if (selectedPath == "[Go to top]" || selectedPath == "[Go up]")
+                        try
+                        {
+                            selectedPath = paths[selection];
+                        }
+                        catch (System.Exception)
                         {
                             selectedPath = "";
                         }
@@ -592,17 +552,20 @@ namespace UserInterface
             return Console.ReadLine();
         }
         
-        public int SelectionPrompt(string Title, string Description, string[] Options, int DefaultSelection = 0)
+        public int SelectionPrompt(string Title, string Description, string[] Options, bool VerticalList, int DefaultSelection = 0)
         {
             int selection = DefaultSelection;
             bool isDone = false;
+            Console.CursorVisible = false;
             while (!isDone)
             {
                 Console.Clear();
                 Console.SetCursorPosition(5, 5);
                 Console.Write(Title);
                 Console.SetCursorPosition(6, 6);
+                Console.ForegroundColor = ConsoleColor.DarkGray;
                 Console.Write(Description);
+                Console.ResetColor();
                 Console.SetCursorPosition(8, 8);
                 for (int i = 0; i < Options.Length; i++)
                 {
@@ -611,9 +574,14 @@ namespace UserInterface
                     Console.ForegroundColor = i == selection ? ConsoleColor.Black : ConsoleColor.White;
                     Console.Write(option);
                     Console.ResetColor();
-                    if (i < Options.Length - 1)
+                    if (i < Options.Length - 1 && !VerticalList)
                     {
                         Console.Write(" - ");
+                    }
+                    else if (VerticalList)
+                    {
+                        Console.WriteLine();
+                        Console.SetCursorPosition(8, Console.CursorTop);
                     }
                 }
                 switch (Console.ReadKey().Key)
@@ -623,6 +591,14 @@ namespace UserInterface
                         break;
 
                     case ConsoleKey.RightArrow:
+                        selection++;
+                        break;
+
+                    case ConsoleKey.UpArrow:
+                        selection--;
+                        break;
+
+                    case ConsoleKey.DownArrow:
                         selection++;
                         break;
 
@@ -643,6 +619,7 @@ namespace UserInterface
                     selection = Options.Length - 1;
                 }
             }
+            Console.Clear();
             return selection;
         }
 
