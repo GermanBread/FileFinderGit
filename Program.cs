@@ -56,13 +56,13 @@ namespace FileFinder
                 #region Help argument
 
                 //show all possible arguments
-                /*if (args.Contains("-h") || args.Contains("--help"))
+                if (args.Contains("-h"))
                 {
                     Console.ForegroundColor = ConsoleColor.Green;
                     Console.WriteLine("Available arguments:");
-                    Console.WriteLine("None");
+                    Console.WriteLine("\"-u\" force update menu to show up");
                     return;
-                }*/
+                }
 
                 #endregion
 
@@ -225,8 +225,16 @@ namespace FileFinder
                                         Console.Write("Major update: ");
                                         break;
 
+                                    case 0:
+                                        Console.Write("Reinstall: ");
+                                        break;
+                                    
+                                    case -1:
+                                        Console.Write("Downgrade: ");
+                                        break;
+                                    
                                     default:
-                                        Console.Write("Downgrade or reinstall ");
+                                        Console.Write("Other ");
                                         break;
                                 }
                                 Console.ForegroundColor = ConsoleColor.White;
@@ -940,35 +948,38 @@ namespace FileFinder
                 secondSplit.Add(int.Parse(item.Where((a) => validIntChars.Contains(a)).ToArray()));
             }
 
-            int updateLevel = 0;
+            int updateLevel;
             //Here's how "update levels" work:
+            //-1 = downgrade >>> do nothing
             //0 = same version >>> do nothing
             //1 = patch >>> update
             //2 = minor update >>> update
             //3 = major update >>> update
 
             //compare versions            
-            if (firstSplit[0] >= secondSplit[0])
+            //compare patch
+            if (firstSplit[0] < secondSplit[0])
             {
-                if (firstSplit[1] >= secondSplit[1])
-                {
-                    if (firstSplit[2] >= secondSplit[2])
-                    {
-                        updateLevel = 0;
-                    }
-                    else
-                    {
-                        updateLevel = 1;
-                    }
-                }
-                else
-                {
-                    updateLevel = 2;
-                }
+                updateLevel = 3;
+            }
+            //compare minor
+            else if (firstSplit[1] < secondSplit[2])
+            {
+                updateLevel = 2;
+            }
+            //compare major
+            else if (firstSplit[2] < secondSplit[2])
+            {
+                updateLevel = 1;
+            }
+            //check if they are equal
+            else if (firstSplit[0] == secondSplit[0] && firstSplit[1] == secondSplit[1] && firstSplit[2] == secondSplit[2])
+            {
+                updateLevel = 0;
             }
             else
             {
-                updateLevel = 3;
+                updateLevel = -1;
             }
             
             return updateLevel;
