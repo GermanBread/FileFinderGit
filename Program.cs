@@ -5,6 +5,8 @@ using System.Linq;
 using System.Threading;
 using System.Diagnostics;
 using System.Net;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using MetadataExtractor.Formats.Exif;
 using MetadataExtractor.Formats.Xmp;
 using UserInterface;
@@ -27,7 +29,7 @@ namespace FileFinder
                 bool IsInTEMP = Directory.GetCurrentDirectory().Contains(TempDirectory);
                 List<string> FilePaths = new List<string>();
                 List<Exception> ExceptionsThrown = new List<Exception>();
-                string FileFinderAppVersion = "v2.0.0";
+                string FileFinderAppVersion = "v2.1.0";
                 string AppExtension = IsUNIX ? ".x86-64" : ".exe";
 
                 #endregion
@@ -249,6 +251,7 @@ namespace FileFinder
                                 Console.WriteLine("Release description: ");
                                 Console.ForegroundColor = ConsoleColor.White;
                                 Console.WriteLine(cutReleaseData.VersionDescription.Replace("\\r\\n", "\n"));
+                                Console.WriteLine();
                                 Console.ResetColor();
 
                                 //Create a directory for the updater
@@ -775,15 +778,12 @@ namespace FileFinder
         
         public class ReleaseData
         {
-            public string VersionTag;
-            public string VersionTitle;
-            public string VersionDescription;
-            public ReleaseData(string stringVerTag, string stringVerTitle, string stringVerDescription)
-            {
-                VersionTag = stringVerTag;
-                VersionTitle = stringVerTitle;
-                VersionDescription = stringVerDescription;
-            }
+            [JsonPropertyName("tag_name")]
+            public string VersionTag { get; set; }
+            [JsonPropertyName("name")]
+            public string VersionTitle { get; set; }
+            [JsonPropertyName("body")]
+            public string VersionDescription { get; set; }
         }
 
         #endregion
@@ -799,7 +799,7 @@ namespace FileFinder
             Console.CursorVisible = true;
             return;
         }
-
+        
         static List<ReleaseData> GetReleases(string url)
         {
             char[] validChars = new char[] { '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '.', 'v'};
@@ -815,8 +815,8 @@ namespace FileFinder
                 using (var sr = new StreamReader(s))
                 {
                     var answer = sr.ReadToEnd();
-                    //I'm too lazy to deal with this JSON stuff, let's just brute force it
-                    string[] rawData = answer.Split(',');
+                    //This has been replaced now!
+                    /*string[] rawData = answer.Split(',');
                     List<string> bruteForcedJSON = new List<string>();
                     List<string> tags = new List<string>();
                     List<string> titles = new List<string>();
@@ -831,13 +831,15 @@ namespace FileFinder
                     for (int r = 0; r < tags.Count; r++)
                     {
                         releases.Add(new ReleaseData
-                            (
-                                new string(tags[r].Split(':')[1].Where(a => validChars.Contains(a)).ToArray()),
-                                RemoveTrailingChar(titles[r].Split(':')[1], '\"'),
-                                RemoveTrailingChar(RemoveTrailingChar(RemoveTrailingChar(descriptions[r].Split(':', 2)[1], ']'), '}'), '\"')
-                            )
+                            {
+                                VersionTag = new string(tags[r].Split(':')[1].Where(a => validChars.Contains(a)).ToArray()),
+                                VersionTitle = RemoveTrailingChar(titles[r].Split(':')[1], '\"'),
+                                VersionDescription = RemoveTrailingChar(RemoveTrailingChar(RemoveTrailingChar(descriptions[r].Split(':', 2)[1], ']'), '}'), '\"')
+                            }
                         );
-                    }
+                    }*/
+
+                    releases = JsonSerializer.Deserialize<ReleaseData[]>(answer).ToList();
                     
                     sr.Close();
                     sr.Dispose();
