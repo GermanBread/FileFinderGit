@@ -189,7 +189,7 @@ namespace FileFinder
                                 List<string> versionTags = new List<string>() { "[Go back]" };
                                 foreach (var item in releases)
                                 {
-                                    versionTags.Add(item.VersionTag);
+                                    versionTags.Add((item.PreRelease ? "(PreRelease) " : "") + item.VersionTag);
                                 }
                                 selectedVersion = pr.SelectionPrompt("Select version", "", versionTags.ToArray(), true, selectedVersion);
 
@@ -236,20 +236,25 @@ namespace FileFinder
                                         break;
                                     
                                     default:
-                                        Console.Write("Other ");
+                                        Console.Write("Other: ");
                                         break;
                                 }
                                 Console.ForegroundColor = ConsoleColor.White;
+                                //Looks like this: v1.2.3 >> v4.5.6
                                 Console.WriteLine(FileFinderAppVersion + " >> " + cutReleaseData.VersionTag);
                                 Console.ForegroundColor = ConsoleColor.DarkGray;
                                 Console.WriteLine();
+                                //Release name
                                 Console.WriteLine("Release name: ");
                                 Console.ForegroundColor = ConsoleColor.White;
+                                //text
                                 Console.WriteLine(cutReleaseData.VersionTitle);
                                 Console.ForegroundColor = ConsoleColor.DarkGray;
                                 Console.WriteLine();
+                                //Release description
                                 Console.WriteLine("Release description: ");
                                 Console.ForegroundColor = ConsoleColor.White;
+                                //test
                                 Console.WriteLine(cutReleaseData.VersionDescription.Replace("\\r\\n", "\n"));
                                 Console.WriteLine();
                                 Console.ResetColor();
@@ -784,6 +789,8 @@ namespace FileFinder
             public string VersionTitle { get; set; }
             [JsonPropertyName("body")]
             public string VersionDescription { get; set; }
+            [JsonPropertyName("prerelease")]
+            public bool PreRelease { get; set; }
         }
 
         #endregion
@@ -802,7 +809,6 @@ namespace FileFinder
         
         static List<ReleaseData> GetReleases(string url)
         {
-            char[] validChars = new char[] { '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '.', 'v'};
             List<ReleaseData> releases = new List<ReleaseData>();
             
             var webRequest = WebRequest.Create(url) as HttpWebRequest;
@@ -810,37 +816,16 @@ namespace FileFinder
             webRequest.ContentType = "application/json";
             webRequest.UserAgent = "Nothing";
 
+            //I have no idea what this does and how it works, but it works
             using (var s = webRequest.GetResponse().GetResponseStream())
             {
+                //Same Here
                 using (var sr = new StreamReader(s))
                 {
                     var answer = sr.ReadToEnd();
-                    //This has been replaced now!
-                    /*string[] rawData = answer.Split(',');
-                    List<string> bruteForcedJSON = new List<string>();
-                    List<string> tags = new List<string>();
-                    List<string> titles = new List<string>();
-                    List<string> descriptions = new List<string>();
-
-                    tags.AddRange(rawData.Where(a => a.Contains("\"tag_name\"")));
-                    titles.AddRange(rawData.Where(a => a.Contains("\"name\"")));
-                    descriptions.AddRange(rawData.Where(a => a.Contains("\"body\"")));
-
-                    titles = titles.Where(a => !a.Contains("FileFinder.exe") && !a.Contains("FileFinder.x86-64")).ToList();
-
-                    for (int r = 0; r < tags.Count; r++)
-                    {
-                        releases.Add(new ReleaseData
-                            {
-                                VersionTag = new string(tags[r].Split(':')[1].Where(a => validChars.Contains(a)).ToArray()),
-                                VersionTitle = RemoveTrailingChar(titles[r].Split(':')[1], '\"'),
-                                VersionDescription = RemoveTrailingChar(RemoveTrailingChar(RemoveTrailingChar(descriptions[r].Split(':', 2)[1], ']'), '}'), '\"')
-                            }
-                        );
-                    }*/
-
                     releases = JsonSerializer.Deserialize<ReleaseData[]>(answer).ToList();
                     
+                    //Free up memory
                     sr.Close();
                     sr.Dispose();
                 }
