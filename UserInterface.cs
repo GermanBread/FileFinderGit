@@ -280,12 +280,12 @@ namespace UserInterface
 
                 Console.Clear();
                 Console.ForegroundColor = ConsoleColor.Yellow;
+                Console.WriteLine("[Arrow keys] move up and down");
                 Console.WriteLine("[Enter] go down a directory");
                 Console.WriteLine("[Backspace] go up a directory");
-                Console.WriteLine("[Arrow keys] move up and down");
+                //Console.WriteLine("[F12] toggle \"show hidden directories\"");
                 Console.WriteLine("[Insert] create a directory");
                 Console.WriteLine("[Delete] delete a directory");
-                //Console.WriteLine("[F12] toggle \"show hidden\"");
                 Console.WriteLine("[ESC] quit and save path");
                 Console.ResetColor();
                 Console.WriteLine();
@@ -311,18 +311,10 @@ namespace UserInterface
                     Console.WriteLine("No path will be selected");
                 }
                 Console.WriteLine();
-                
-                //remove hidden directories
-                /*
-                if (!showHidden)
-                {
-                    paths = paths.Where(a => new DirectoryInfo(a).Attributes != FileAttributes.Hidden).ToList();
-                }
-                */
 
                 //list all the drives
                 for (int i = 0; i < paths.Count; i++)
-                {
+                {                   
                     if (i < selection - 2)
                     {
                         continue;
@@ -451,7 +443,7 @@ namespace UserInterface
                         break;
 
                     case ConsoleKey.Insert:
-                        //if the user chose to create a folder
+                        //If the user chose to create a folder
                         SettingsUI SUI = new SettingsUI();
                         Prompts PR = new Prompts();
                         string directoryName = PR.UserInput("Enter directory name", selectedPath + Path.DirectorySeparatorChar);

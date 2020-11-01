@@ -15,22 +15,26 @@ namespace FileFinder
 {
     class Program
     {
+        #region Global Variables
+
+        #endregion
+
         static void Main(string[] args)
         {             
             #region Program Setup
                 
                 #region Variables
                 
-                //variables that don't depend on the settings manager
+                //Variables that don't depend on the settings manager
                 char DirNavigationChar = System.IO.Path.DirectorySeparatorChar;
                 bool IsUNIX = DirNavigationChar == '/';
-                string LogFileName = "FileFinder_log_" + new Random().Next(1111, 9999).ToString() + ".txt";
                 string TempDirectory = System.IO.Path.TrimEndingDirectorySeparator(System.IO.Path.GetTempPath());
                 bool IsInTEMP = Directory.GetCurrentDirectory().Contains(TempDirectory);
                 List<string> FilePaths = new List<string>();
                 List<Exception> ExceptionsThrown = new List<Exception>();
-                string FileFinderAppVersion = "v2.1.0";
                 string AppExtension = IsUNIX ? ".x86-64" : ".exe";
+                //Release definition
+                string FileFinderAppVersion = "v2.2.0";
 
                 #endregion
 
@@ -68,9 +72,29 @@ namespace FileFinder
 
                 #endregion
 
+                #region Log Init
+
+                //create log directory
+                try 
+                {
+                    if (!Directory.Exists("." + DirNavigationChar + "FileFinderLogs"))
+                    {
+                        Directory.CreateDirectory("." + DirNavigationChar + "FileFinderLogs");
+                    }
+                } 
+                catch 
+                {
+                    Console.WriteLine("Logdir creation: The programm encountered a severe error and cannot continue");
+                    Console.CursorVisible = true;
+                    return;
+                }
+                
+                #endregion
+
                 #region Self-update
                 
-                    #region Updating
+                    //This should not have a log file
+                    #region Updating the main app
 
                     if (IsInTEMP)
                     {
@@ -116,23 +140,34 @@ namespace FileFinder
 
                     #endregion
                 
+                    #region Updater log file creation
+
+                    string UpdaterLogFilePath = "." + DirNavigationChar + "FileFinderLogs" + DirNavigationChar + new Random().Next(1000, 9999) + "FileFinderUpdater.log";
+                    Logger.CreateLog(UpdaterLogFilePath, 0);
+
+                    #endregion
+                    
                     #region TEMP deletion
                     
                     try
                     {
                         //Get a list of files and delete them.
+                        Logger.LogToFile("Checking for an existing temp directory", 0, Logger.UrgencyLevel.Info);
                         if (Directory.Exists(TempDirectory + DirNavigationChar + "FileFinderUpdater"))
                         {
                             foreach (var file in Directory.EnumerateFiles(TempDirectory + DirNavigationChar + "FileFinderUpdater"))
                             {
+                                Logger.LogToFile($"Deleting {file}", 0, Logger.UrgencyLevel.Info);
                                 File.Delete(file);
                             }
+                            Logger.LogToFile("Deleting temp directory", 0, Logger.UrgencyLevel.Info);
                             Directory.Delete(TempDirectory + DirNavigationChar + "FileFinderUpdater");
                         }
                     }
                     catch (Exception caughtException)
                     {
                         Console.ForegroundColor = ConsoleColor.Red;
+                        Logger.LogToFile("Temp directory could not be deleted", 0, Logger.UrgencyLevel.Critical);
                         Console.WriteLine("Updater: Temporary directory could not be deleted");
                         Console.ForegroundColor = ConsoleColor.Yellow;
                         Console.WriteLine($"Updater: Delete \"{TempDirectory + DirNavigationChar}FileFinderUpdater\" and restart the app");
@@ -148,6 +183,7 @@ namespace FileFinder
                     if (Directory.EnumerateDirectories(Directory.GetCurrentDirectory()).Where(a => a.Contains(DirNavigationChar + "obj")).ToList().Count > 0 || Directory.GetCurrentDirectory().Contains(DirNavigationChar + "obj"))
                     {
                         Console.ForegroundColor = ConsoleColor.DarkGray;
+                        Logger.LogToFile("App is running in local debug, skipping update", 0, Logger.UrgencyLevel.Info);
                         Console.WriteLine("Updater: App is running in local debug; Skipping update");
                         Console.ResetColor();
                     }
@@ -155,8 +191,24 @@ namespace FileFinder
                     {
                         Console.WriteLine("Checking for updates");
                         
-                        //Get all releases
-                        List<ReleaseData> releases = GetReleases("https://api.github.com/repos/GermanBread/FileFinderGit/releases");
+                        List<ReleaseData> releases = new List<ReleaseData>();
+                        try
+                        {
+                            //Get all releases if possible
+                            Logger.LogToFile("Sending HTTP request to github API", 0, Logger.UrgencyLevel.Info);
+                            releases = GetReleases("https://api.github.com/repos/GermanBread/FileFinderGit/releases");
+                            Logger.LogToFile("Response recieved", 0, Logger.UrgencyLevel.Info);
+                        }
+                        catch (WebException webExcep)
+                        {
+                            Logger.LogToFile($"Recieved {webExcep.Status}", 0, Logger.UrgencyLevel.Error);
+                            Console.ForegroundColor = ConsoleColor.Red;
+                            Console.WriteLine("Updater: Error while contacting server");
+                            Console.ResetColor();
+                            Console.WriteLine(webExcep.Message);
+                            Thread.Sleep(2000);
+                            releases = new List<ReleaseData>() { new ReleaseData { VersionTag = "v0.0.0" } };
+                        }
 
                         //See method "CompareVersions" for more details.
                         int updateLevel = CompareVersions(FileFinderAppVersion, releases[0].VersionTag);
@@ -164,6 +216,7 @@ namespace FileFinder
                         //If there is a new version, start the update menu
                         if (updateLevel > 0 || args.Contains("-u"))
                         {
+                            Logger.LogToFile("Update has been found", 0, Logger.UrgencyLevel.Info);
                             //This variable is used to initiate the loop
                             bool firstTime = true;
                             int action = 0;
@@ -202,9 +255,11 @@ namespace FileFinder
                             //The user chose to update
                             if (action > 0)
                             {
+                                Logger.LogToFile("Starting update", 0, Logger.UrgencyLevel.Info);
                                 //If the user chose to automatically update, set this
                                 if (action == 1)
                                 {
+                                    Logger.LogToFile("Automatic update has been selected", 0, Logger.UrgencyLevel.Info);
                                     selectedVersion = 1;
                                 }
                                 
@@ -260,6 +315,7 @@ namespace FileFinder
                                 Console.ResetColor();
 
                                 //Create a directory for the updater
+                                Logger.LogToFile("Temp directory was created", 0, Logger.UrgencyLevel.Info);
                                 string destPath = TempDirectory + DirNavigationChar + "FileFinderUpdater";
                                 Directory.CreateDirectory(destPath);
 
@@ -269,15 +325,19 @@ namespace FileFinder
                                     Console.ForegroundColor = ConsoleColor.DarkGray;
                                     Console.WriteLine("Updater: Downloading release");
 
+                                    Logger.LogToFile("File download started", 0, Logger.UrgencyLevel.Info);
                                     DownloadFile("https://github.com/GermanBread/FileFinderGit/releases/download/" + cutReleaseData.VersionTag + "/FileFinder" + AppExtension, destPath + DirNavigationChar + "FileFinder_updater" + AppExtension);
+                                    Logger.LogToFile("File download completed", 0, Logger.UrgencyLevel.Info);
                                     
                                     //The following step is neccessary for UNIX machines because files require "execute permissions"
                                     if (IsUNIX)
                                     {
+                                        Logger.LogToFile("Marking new file as executable", 0, Logger.UrgencyLevel.Info);
                                         RunInBash("chmod +x " + destPath + DirNavigationChar + "FileFinder_updater" + AppExtension);
                                     }
 
                                     //Now duplicate the executable to avoid a headache later
+                                    Logger.LogToFile("Duplicating updater", 0, Logger.UrgencyLevel.Info);
                                     File.Copy(destPath + DirNavigationChar + "FileFinder_updater" + AppExtension, destPath + DirNavigationChar + "FileFinder" + AppExtension);
 
                                     Console.WriteLine("Updater: Starting updater");
@@ -290,12 +350,17 @@ namespace FileFinder
                                     startInfo.Arguments = Directory.GetCurrentDirectory();
                                     startInfo.WorkingDirectory = destPath;
                                     startInfo.CreateNoWindow = false;
+                                    Logger.LogToFile("Starting updater", 0, Logger.UrgencyLevel.Info);
                                     Process.Start(startInfo);
+
+                                    //Close the logfile
+                                    Logger.SaveLog(0);
                                     
                                     return;
                                 }
                                 catch (Exception caughtException)
                                 {
+                                    Logger.LogToFile("Download failed", 0, Logger.UrgencyLevel.Error);
                                     Console.ForegroundColor = ConsoleColor.Red;
                                     Console.WriteLine("Updater: Error while downloading release");
                                     Console.ForegroundColor = ConsoleColor.Yellow;
@@ -311,9 +376,13 @@ namespace FileFinder
                         }
                         else
                         {
+                            Logger.LogToFile("App is up to date", 0, Logger.UrgencyLevel.Info);
                             Console.WriteLine("App is up to date");
                         }
                     }
+
+                    //Close the log file
+                    Logger.SaveLog(0);
 
                     #endregion
 
@@ -355,127 +424,22 @@ namespace FileFinder
 
             #region Phases Init
 
-                #region Log-files and directory creation
-                
-                //create log directory
-                try 
-                {
-                    if (!Directory.Exists("." + DirNavigationChar + "FileFinder_Logs"))
-                    {
-                        Directory.CreateDirectory("." + DirNavigationChar + "FileFinder_Logs");
-                    }
-                } 
-                catch 
-                {
-                    Console.WriteLine("Logdir creation: The programm encountered a severe error and cannot continue");
-                    Console.CursorVisible = true;
-                    return;
-                }
+                #region Copy phase log file creation
                 
                 //create log file
-                StreamWriter logFile;
-                try 
-                {
-                    logFile = new StreamWriter("." + DirNavigationChar + "FileFinder_Logs" + DirNavigationChar + LogFileName);
-                } 
-                catch (IOException ioException) 
-                {
-                    Console.ForegroundColor = ConsoleColor.Red;
-                    Console.WriteLine("Something went wrong when creating a log file");
-                    Console.ResetColor();
-                    ExceptionsThrown.Add(ioException);
-                    try 
-                    {
-                        logFile = new StreamWriter("." + DirNavigationChar + "FileFinder_Logs" + DirNavigationChar + LogFileName + new Random().Next(0, 9));   
-                    } 
-                    catch 
-                    {
-                        Console.WriteLine("Logfile creation: Logfile could not be created");
-                        Console.CursorVisible = true;
-                        return;
-                    }
-                }
-
-                #endregion
-
-                #region Legacy code
-                
-                //check if the path is valid
-                /*
-                if (File.Exists(Path))
-                {
-                    Console.WriteLine("\"" + Path + "\" is a file");
-                    logFile.WriteLine("Path-check log:");
-                    logFile.WriteLine("Source-path is a file");
-                    logFile.WriteLine();
-                    logFile.WriteLine("===============================");                
-                    logFile.Close();
-                    
-                    Console.CursorVisible = true;
-                    return;
-                }
-                else if (!Directory.Exists(Path))
-                {
-                    Console.WriteLine("\"" + Path + "\" does not exist");
-                    logFile.WriteLine("Path-check log:");
-                    logFile.WriteLine("Source-path does not exist");
-                    logFile.WriteLine();
-                    logFile.WriteLine("===============================");                
-                    logFile.Close();
-                    
-                    Console.CursorVisible = true;
-                    return;
-                }
-
-                //create a directory before the check
-                if (CreateTargetDir && !Directory.Exists(TargetPath) && !File.Exists(TargetPath))
-                {
-                    Directory.CreateDirectory(TargetPath);
-                }
-                
-                //check if the target path is valid
-                if (File.Exists(TargetPath))
-                {
-                    Console.WriteLine("\"" + TargetPath + "\" is a file");
-                    logFile.WriteLine("Path-check log:");
-                    logFile.WriteLine("Target-path is a file");
-                    logFile.WriteLine();
-                    logFile.WriteLine("===============================");                
-                    logFile.Close();
-                    
-                    Console.CursorVisible = true;
-                    return;
-                }
-                else if (!Directory.Exists(TargetPath))
-                {
-                    Console.WriteLine("\"" + TargetPath + "\" does not exist");
-                    logFile.WriteLine("Path-check log:");
-                    logFile.WriteLine("Target-path does not exist");
-                    logFile.WriteLine();
-                    logFile.WriteLine("===============================");                
-                    logFile.Close();
-                    
-                    Console.CursorVisible = true;
-                    return;
-                }
-                */
+                string CopyLogFilePath = "." + DirNavigationChar + "FileFinderLogs" + DirNavigationChar + new Random().Next(1000, 9999) + "FileFinderCopier.log";
+                Logger.CreateLog(CopyLogFilePath, 1);
 
                 #endregion
             
                 #region Logfile init
 
                 //write to file
-                logFile.WriteLine("FILE LOCATOR & COPIER LOG");
-                logFile.WriteLine();
-                logFile.WriteLine("===============================");
-
-                logFile.WriteLine("These arguments were given:");
-                logFile.WriteLine("Set[0] = " + Path);
-                logFile.WriteLine("Set[1] = " + TargetPath);
-                logFile.WriteLine("Set[2] = " + FileNameType);
-                logFile.WriteLine("Set[3] = " + OverwriteType);
-                logFile.WriteLine();
-                logFile.WriteLine("===============================");
+                Logger.LogToFile("Arguments:", 1, Logger.UrgencyLevel.Info);
+                Logger.LogToFile($"Set[0] = {Path}", 1, Logger.UrgencyLevel.Info);
+                Logger.LogToFile($"Set[1] = {TargetPath}", 1, Logger.UrgencyLevel.Info);
+                Logger.LogToFile($"Set[2] = {FileNameType}", 1, Logger.UrgencyLevel.Info);
+                Logger.LogToFile($"Set[3] = {OverwriteType}", 1, Logger.UrgencyLevel.Info);
 
                 #endregion
 
@@ -524,8 +488,7 @@ namespace FileFinder
                 Console.WriteLine("An error occured. Check logs for more info");
                 Console.ResetColor();
                 Console.WriteLine("File finding method: " + caughtException.Message);
-                logFile.WriteLine("File finding method: " + caughtException.Message);
-                logFile.Close();
+                Logger.LogToFile($"Exception was thrown: {caughtException}", 1, Logger.UrgencyLevel.Critical);
                 Console.CursorVisible = true;
                 return;
             }
@@ -533,29 +496,17 @@ namespace FileFinder
             FilePaths.Sort();
 
             //log in console how many files were found
-            Console.WriteLine(FilePaths.Count + " media files were found");
-
-            if (FilePaths.Count > 0)
-            {
-                logFile.WriteLine("File-locator log:");
-                logFile.WriteLine(FilePaths.Count + " media files were found");
-            }
+            Console.WriteLine(FilePaths.Count + " media file(s) were found");
+            Logger.LogToFile($"{FilePaths.Count} media file(s) were found", 1, Logger.UrgencyLevel.Info);
 
             foreach (var item in FilePaths)
             {
-                logFile.WriteLine("Found \"" + IsolateFilename(item) + "." + IsolateFileExtension(item) + "\"");
+                Logger.LogToFile($"Found \"{item}\"", 1, Logger.UrgencyLevel.Info);
             }
 
             #endregion
 
             #region File Copying Phase
-
-            if (FilePaths.Count > 0)
-            {
-                logFile.WriteLine();
-                logFile.WriteLine("===============================");
-                logFile.WriteLine("File-copier log:");
-            }
 
             List<string> processedFileList = new List<string>();
 
@@ -587,7 +538,7 @@ namespace FileFinder
                         {
                             //fallback
                             fileShotTime = File.GetLastWriteTimeUtc(FilePaths[i]).ToString();
-                            logFile.WriteLine("WARNING: \"" + FilePaths[i] + "\" has missing metadata, falling back to last write time!");
+                            Logger.LogToFile($"File \"{FilePaths[i]}\" was sorted using the last write time", 1, Logger.UrgencyLevel.Warn);
                             unsortedCount++;
                         }
                     }
@@ -596,7 +547,7 @@ namespace FileFinder
                 {
                     //fallback
                     fileShotTime = File.GetLastWriteTimeUtc(FilePaths[i]).ToString();
-                    logFile.WriteLine("WARNING: \"" + FilePaths[i] + "\" could not be sorted due to an error, falling back to last write time!");
+                    Logger.LogToFile($"File \"{FilePaths[i]}\" was sorted using the last write time", 1, Logger.UrgencyLevel.Warn);
                     unsortedCount++;
                     //count the exeption caught for debugging purposes
                     ExceptionsThrown.Add(caughtException);
@@ -655,7 +606,7 @@ namespace FileFinder
                         Directory.CreateDirectory(destpath);
                         File.Copy(FilePaths[i], copypath);
                         //log to file
-                        logFile.WriteLine("Copied \"" + FilePaths[i] + "\" to \"" + copypath + "\"");
+                        Logger.LogToFile("Copied \"" + FilePaths[i] + "\" to \"" + copypath + "\"", 1, Logger.UrgencyLevel.Info);
                         Console.ForegroundColor = ConsoleColor.Green;
                         //log to console
                         Console.SetCursorPosition(0, Console.CursorTop);
@@ -675,35 +626,36 @@ namespace FileFinder
 
                             if (OverwriteType == 3)
                             {
-                                logFile.WriteLine("INFO: User told me to overwrite \"" + copypath + "\"");
+                                Logger.LogToFile("Overwrote \"" + copypath + "\"", 1, Logger.UrgencyLevel.Info);
                             }
                             else if (OverwriteType == 2)
                             {
-                                logFile.WriteLine("INFO: This file \"" + copypath + "\" is newer, so I'm going to overwrite it");
+                                Logger.LogToFile("Kept \"" + copypath + "\"", 1, Logger.UrgencyLevel.Info);
                             }
                             else
                             {
-                                logFile.WriteLine("INFO: This file \"" + copypath + "\" is older, so I'm going to overwrite it");
+                                Logger.LogToFile("Overwrote \"" + copypath + "\"", 1, Logger.UrgencyLevel.Info);
                             }
-                            Console.WriteLine("Overwriting duplicate file                                  ");
+                            Console.WriteLine("Overwrote duplicate file                                  ");
 
-                            processedFileList.Insert(0, "Overwritten \"" + IsolateFilename(FilePaths[i]) + "." + IsolateFileExtension(FilePaths[i]) + "\"                                      ");
+                            processedFileList.Insert(0, "Overwrote \"" + IsolateFilename(FilePaths[i]) + "." + IsolateFileExtension(FilePaths[i]) + "\"                                      ");
                         }
                         else if (OverwriteType == 0)
                         {
                             //this will execute when OVERWRITE equals FALSE a.k.a. when the user wants to keep the files
-                            logFile.WriteLine("INFO: User told me not to touch existing files!");
+                            Logger.LogToFile("Kept \"" + copypath + "\"", 1, Logger.UrgencyLevel.Info);
                             processedFileList.Insert(0, "Kept \"" + IsolateFilename(FilePaths[i]) + "." + IsolateFileExtension(FilePaths[i]) + "\"                                      ");
                         }
                         else
                         {
                             //this will execute when the file in the source folder is older than the file in the target folder
-                            logFile.WriteLine("INFO: Kept \"" + copypath + "\"");
+                            Logger.LogToFile("Kept \"" + copypath + "\"", 1, Logger.UrgencyLevel.Info);
                             processedFileList.Insert(0, "Kept \"" + IsolateFilename(FilePaths[i]) + "." + IsolateFileExtension(FilePaths[i]) + "\"                                      ");
                         }
                     }
                 } catch (Exception caughtException) {
                     //this normally executes when there is a incorrect navigation character or if the filename is invalid
+                    Logger.LogToFile("\"" + copypath + "\" caused an error: " + caughtException.Message, 1, Logger.UrgencyLevel.Error);
                     Console.SetCursorPosition(0, Console.CursorTop);
                     Console.ForegroundColor = ConsoleColor.Red;
                     Console.SetCursorPosition(0, 6);
@@ -732,9 +684,14 @@ namespace FileFinder
                 Console.ResetColor();
             }
 
+            Logger.SaveLog(1);
+
             #endregion
 
             #region Programm Exit
+
+            string SummaryLogFilePath = "." + DirNavigationChar + "FileFinderLogs" + DirNavigationChar + new Random().Next(1000, 9999) + "FileFinderSummary.log";
+            Logger.CreateLog(SummaryLogFilePath, 2);
             
             Console.ForegroundColor = ConsoleColor.Green;
             Console.SetCursorPosition(0, 16);
@@ -742,38 +699,23 @@ namespace FileFinder
             Console.ResetColor();
             Console.WriteLine("You may want to check the log file");
             Console.WriteLine();
-            
-            //log to file
-            if (FilePaths.Count > 0 || ExceptionsThrown.Count > 0)
-            {
-                logFile.WriteLine("===============================");
-            }
+
             if (FilePaths.Count > 0)
             {
-                logFile.WriteLine($"{(int)(((float)unsortedCount / (float)FilePaths.Count) * 100f)}% of files were sorted using fallback method");                
+                Logger.LogToFile($"{(int)(((float)unsortedCount / (float)FilePaths.Count) * 100f)}% of files were sorted using fallback method", 2, Logger.UrgencyLevel.Info);
             }
             if (ExceptionsThrown.Count > 0)
             {
-                logFile.WriteLine($"The following {ExceptionsThrown.Count} exception(s) were caught:");
+                Logger.LogToFile($"The following {ExceptionsThrown.Count} exception(s) were caught:", 2, Logger.UrgencyLevel.Info);
             }
             foreach (var exceptionName in ExceptionsThrown)
             {
-                logFile.WriteLine(exceptionName.Message);
-                logFile.WriteLine(exceptionName.TargetSite);
+                Logger.LogToFile(exceptionName.Message, 2, Logger.UrgencyLevel.Info);
             }
-            //add spacer
-            if (FilePaths.Count > 0 || ExceptionsThrown.Count > 0)
-            {
-                logFile.WriteLine();
-                logFile.WriteLine("===============================");
-            }
-            logFile.WriteLine("Date when programm exited: " + DateTime.Now);
-            logFile.WriteLine();
-            logFile.WriteLine("===============================");
+            Logger.LogToFile("Date when programm exited: " + DateTime.Now, 2, Logger.UrgencyLevel.Info);
 
             //close the stream
-            logFile.Close();
-            logFile.Dispose();
+            Logger.SaveLog(2);
             Console.CursorVisible = true;
 
             #endregion
@@ -793,17 +735,87 @@ namespace FileFinder
             public bool PreRelease { get; set; }
         }
 
+        public class Logger
+        {
+            public static int MessageID = 0;
+            public static Dictionary<int, StreamWriter> LogFiles = new Dictionary<int, StreamWriter>();
+            public static void CreateLog(string Path, int ID)
+            {
+                LogFiles.Add(ID, new StreamWriter(Path));
+                LogFiles.TryGetValue(ID, out StreamWriter writer);
+                writer.WriteLine($"Log file created with ID {ID}");
+            }
+            public static void LogToFile(string Message, int ID, UrgencyLevel Urgency)
+            {
+                StreamWriter writer;
+                LogFiles.TryGetValue(ID, out writer);
+                switch (Urgency)
+                {
+                    case UrgencyLevel.Info:
+                        writer.WriteLine($"[{MessageID} INFO] " + Message);
+                        break;
+                    
+                    case UrgencyLevel.Warn:
+                        writer.WriteLine($"[{MessageID} WARN] " + Message);
+                        break;
+
+                    case UrgencyLevel.Error:
+                        writer.WriteLine($"[{MessageID} ERROR] " + Message);
+                        break;
+                    
+                    case UrgencyLevel.Critical:
+                        writer.WriteLine($"[{MessageID} CRITICAL] " + Message);
+                        break;
+                }
+                MessageID++;
+            }
+            public static void SaveLog(int ID)
+            {
+                StreamWriter writer;
+                LogFiles.TryGetValue(ID, out writer);
+                writer.WriteLine($"Log file saved");
+                writer.Close();
+                writer.Dispose();
+                LogFiles.Remove(ID);
+            }
+            public enum UrgencyLevel
+            {
+                Info = 0,
+                Warn = 1,
+                Error = 2,
+                Critical = 3
+            }
+        }
+
         #endregion
         
         #region Program Methods
         
         static void appCancel(object sender, ConsoleCancelEventArgs cancelEvents)
         {
-            Console.SetCursorPosition(0, 0);
-            Console.WriteLine("                        ");
-            Console.WriteLine("       [ Exited ]       ");
-            Console.WriteLine("                        ");
             Console.CursorVisible = true;
+            Console.Clear();
+            Console.ForegroundColor = ConsoleColor.DarkGray;
+            Console.WriteLine("Writing to log");
+            try
+            {
+                foreach (var logFile in Logger.LogFiles)
+                {
+                    Logger.LogToFile($"{cancelEvents.SpecialKey} was recieved", logFile.Key, Logger.UrgencyLevel.Info);
+                    Logger.SaveLog(logFile.Key);
+                }
+            }
+            catch (NullReferenceException)
+            {
+                Console.WriteLine("Log file does not exist");
+            }
+            catch (Exception excep)
+            {
+                Console.WriteLine("Unknown error while writing");
+                Console.WriteLine(excep.Message);
+            }
+            Console.ResetColor();
+            Console.WriteLine("Programm exit");
             return;
         }
         
@@ -823,7 +835,7 @@ namespace FileFinder
                 using (var sr = new StreamReader(s))
                 {
                     var answer = sr.ReadToEnd();
-                    releases = JsonSerializer.Deserialize<ReleaseData[]>(answer).ToList();
+                    releases = JsonSerializer.Deserialize<List<ReleaseData>>(answer);
                     
                     //Free up memory
                     sr.Close();
