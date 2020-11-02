@@ -34,7 +34,7 @@ namespace FileFinder
                 List<Exception> ExceptionsThrown = new List<Exception>();
                 string AppExtension = IsUNIX ? ".x86-64" : ".exe";
                 //Release definition
-                string FileFinderAppVersion = "v2.2.0";
+                string FileFinderAppVersion = "v2.1.0";
 
                 #endregion
 
@@ -173,6 +173,7 @@ namespace FileFinder
                         Console.WriteLine($"Updater: Delete \"{TempDirectory + DirNavigationChar}FileFinderUpdater\" and restart the app");
                         Console.ResetColor();
                         Console.WriteLine("Exception: " + caughtException.Message);
+                        Logger.SaveLog(0);
                         return;
                     }
 
@@ -490,6 +491,7 @@ namespace FileFinder
                 Console.WriteLine("File finding method: " + caughtException.Message);
                 Logger.LogToFile($"Exception was thrown: {caughtException}", 1, Logger.UrgencyLevel.Critical);
                 Console.CursorVisible = true;
+                Logger.SaveLog(1);
                 return;
             }
 
@@ -744,6 +746,7 @@ namespace FileFinder
                 LogFiles.Add(ID, new StreamWriter(Path));
                 LogFiles.TryGetValue(ID, out StreamWriter writer);
                 writer.WriteLine($"Log file created with ID {ID}");
+                writer.WriteLine($"Local time is {DateTime.Now}");
             }
             public static void LogToFile(string Message, int ID, UrgencyLevel Urgency)
             {
@@ -773,6 +776,7 @@ namespace FileFinder
             {
                 StreamWriter writer;
                 LogFiles.TryGetValue(ID, out writer);
+                writer.WriteLine($"Local time is {DateTime.Now}");
                 writer.WriteLine($"Log file saved");
                 writer.Close();
                 writer.Dispose();
