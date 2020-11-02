@@ -73,6 +73,52 @@ namespace FileFinder
 
                 #endregion
 
+                #region Updating the main app
+
+                if (IsInTEMP)
+                {
+                    if (args.Length == 0)
+                    {
+                        Console.WriteLine("Updater: This directory is reserved for the updater!");
+                        return;
+                    }
+                    
+                    string appDirPath = args[0];
+                    
+                    Console.ForegroundColor = ConsoleColor.DarkGray;
+                    Console.WriteLine("Updater: Preparing");
+                    
+                    try
+                    {
+                        //Instead of deleting the application instantly, make a backup.
+                        Console.WriteLine("Updater: Making backup");
+                        File.Move(appDirPath + DirNavigationChar + AppName + AppExtension, appDirPath + DirNavigationChar + AppName + "Backup" + AppExtension);
+                        Console.WriteLine("Updater: Replacing executable with downloaded version");
+                        File.Move(Directory.GetCurrentDirectory() + DirNavigationChar + AppName + AppExtension, appDirPath + DirNavigationChar + AppName + AppExtension);
+
+                        //Now delete the backup.
+                        Console.WriteLine("Updater: Deleting the backup");
+                        File.Delete(appDirPath + DirNavigationChar + AppName + "Backup" + AppExtension);
+                    }
+                    catch(Exception caughtException)
+                    {
+                        Console.ForegroundColor = ConsoleColor.Red;
+                        Console.WriteLine("Updater: Update failed, make sure the app's path doesn't contain spaces!");
+                        Console.ResetColor();
+                        Console.WriteLine("Exception: " + caughtException.Message);
+                        return;
+                    }
+
+                    Console.ForegroundColor = ConsoleColor.Green;
+                    Console.WriteLine("Updater: Update complete. You may restart the app");
+                    Console.ForegroundColor = ConsoleColor.DarkGray;
+                    Console.WriteLine("Note: Any leftover update files will not be deleted until the app has been restarted");
+                    Console.ResetColor();
+                    return;
+                }
+
+                #endregion
+
                 #region Log Init
 
                 //create log directory
@@ -94,53 +140,6 @@ namespace FileFinder
 
                 #region Self-update
                 
-                    //This should not have a log file
-                    #region Updating the main app
-
-                    if (IsInTEMP)
-                    {
-                        if (args.Length == 0)
-                        {
-                            Console.WriteLine("Updater: This directory is reserved for the updater!");
-                            return;
-                        }
-                        
-                        string appDirPath = args[0];
-                        
-                        Console.ForegroundColor = ConsoleColor.DarkGray;
-                        Console.WriteLine("Updater: Preparing");
-                        
-                        try
-                        {
-                            //Instead of deleting the application instantly, make a backup.
-                            Console.WriteLine("Updater: Making backup");
-                            File.Move(appDirPath + DirNavigationChar + AppName + AppExtension, appDirPath + DirNavigationChar + AppName + "Backup" + AppExtension);
-                            Console.WriteLine("Updater: Replacing executable with downloaded version");
-                            File.Move(Directory.GetCurrentDirectory() + DirNavigationChar + AppName + AppExtension, appDirPath + DirNavigationChar + AppName + AppExtension);
-
-                            //Now delete the backup.
-                            Console.WriteLine("Updater: Deleting the backup");
-                            File.Delete(appDirPath + DirNavigationChar + AppName + "Backup" + AppExtension);
-                        }
-                        catch(Exception caughtException)
-                        {
-                            Console.ForegroundColor = ConsoleColor.Red;
-                            Console.WriteLine("Updater: Update failed, make sure the app's path doesn't contain spaces!");
-                            Console.ResetColor();
-                            Console.WriteLine("Exception: " + caughtException.Message);
-                            return;
-                        }
-
-                        Console.ForegroundColor = ConsoleColor.Green;
-                        Console.WriteLine("Updater: Update complete. You may restart the app");
-                        Console.ForegroundColor = ConsoleColor.DarkGray;
-                        Console.WriteLine("Note: Any leftover update files will not be deleted until the app has been restarted");
-                        Console.ResetColor();
-                        return;
-                    }
-
-                    #endregion
-                
                     #region Updater log file creation
 
                     string UpdaterLogFilePath = "." + DirNavigationChar + "FileFinderLogs" + DirNavigationChar + new Random().Next(1000, 9999) + "FileFinderUpdater.log";
@@ -156,12 +155,19 @@ namespace FileFinder
                         Logger.LogToFile("Checking for an existing temp directory", 0, Logger.UrgencyLevel.Info);
                         if (Directory.Exists(TempDirectory + DirNavigationChar + "FileFinderUpdater"))
                         {
+                            //Enumerate each file and delete
                             foreach (var file in Directory.EnumerateFiles(TempDirectory + DirNavigationChar + "FileFinderUpdater"))
                             {
                                 Logger.LogToFile($"Deleting {file}", 0, Logger.UrgencyLevel.Info);
                                 File.Delete(file);
                             }
-                            Logger.LogToFile("Deleting temp directory", 0, Logger.UrgencyLevel.Info);
+                            //Enumerate each directory and delete
+                            foreach (var directory in Directory.EnumerateDirectories(TempDirectory + DirNavigationChar + "FileFinderUpdater"))
+                            {
+                                Logger.LogToFile($"Deleting {directory}", 0, Logger.UrgencyLevel.Info);
+                                Directory.Delete(directory);
+                            }
+                            Logger.LogToFile("Temp directory deleted", 0, Logger.UrgencyLevel.Info);
                             Directory.Delete(TempDirectory + DirNavigationChar + "FileFinderUpdater");
                         }
                     }
@@ -175,6 +181,7 @@ namespace FileFinder
                         Console.ResetColor();
                         Console.WriteLine("Exception: " + caughtException.Message);
                         Logger.SaveLog(0);
+                        Console.CursorVisible = true;
                         return;
                     }
 
