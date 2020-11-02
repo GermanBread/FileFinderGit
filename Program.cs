@@ -26,12 +26,13 @@ namespace FileFinder
                 #region Variables
                 
                 //Variables that don't depend on the settings manager
-                char DirNavigationChar = System.IO.Path.DirectorySeparatorChar;
+                char DirNavigationChar = Path.DirectorySeparatorChar;
                 bool IsUNIX = DirNavigationChar == '/';
-                string TempDirectory = System.IO.Path.TrimEndingDirectorySeparator(System.IO.Path.GetTempPath());
+                string TempDirectory = Path.TrimEndingDirectorySeparator(Path.GetTempPath());
                 bool IsInTEMP = Directory.GetCurrentDirectory().Contains(TempDirectory);
                 List<string> FilePaths = new List<string>();
                 List<Exception> ExceptionsThrown = new List<Exception>();
+                string AppName = "FileFinder";
                 string AppExtension = IsUNIX ? ".x86-64" : ".exe";
                 //Release definition
                 string FileFinderAppVersion = "v2.1.0";
@@ -113,13 +114,13 @@ namespace FileFinder
                         {
                             //Instead of deleting the application instantly, make a backup.
                             Console.WriteLine("Updater: Making backup");
-                            File.Move(appDirPath + DirNavigationChar + "FileFinder" + AppExtension, appDirPath + DirNavigationChar + "FileFinder_backup" + AppExtension);
+                            File.Move(appDirPath + DirNavigationChar + AppName + AppExtension, appDirPath + DirNavigationChar + AppName + "Backup" + AppExtension);
                             Console.WriteLine("Updater: Replacing executable with downloaded version");
-                            File.Move(Directory.GetCurrentDirectory() + DirNavigationChar + "FileFinder" + AppExtension, appDirPath + DirNavigationChar + "FileFinder" + AppExtension);
+                            File.Move(Directory.GetCurrentDirectory() + DirNavigationChar + AppName + AppExtension, appDirPath + DirNavigationChar + AppName + AppExtension);
 
                             //Now delete the backup.
                             Console.WriteLine("Updater: Deleting the backup");
-                            File.Delete(appDirPath + DirNavigationChar + "FileFinder_backup" + AppExtension);
+                            File.Delete(appDirPath + DirNavigationChar + AppName + "Backup" + AppExtension);
                         }
                         catch(Exception caughtException)
                         {
@@ -208,11 +209,11 @@ namespace FileFinder
                             Console.ResetColor();
                             Console.WriteLine(webExcep.Message);
                             Thread.Sleep(2000);
-                            releases = new List<ReleaseData>() { new ReleaseData { VersionTag = "v0.0.0" } };
+                            releases = new List<ReleaseData>() { new ReleaseData { ReleaseTag = "v0.0.0" } };
                         }
 
                         //See method "CompareVersions" for more details.
-                        int updateLevel = CompareVersions(FileFinderAppVersion, releases[0].VersionTag);
+                        int updateLevel = CompareVersions(FileFinderAppVersion, releases[0].ReleaseTag);
                         int selectedVersion = 0;
                         //If there is a new version, start the update menu
                         if (updateLevel > 0 || args.Contains("-u"))
@@ -241,9 +242,15 @@ namespace FileFinder
                                 
                                 //Now, since we know each version's tag, show a prompt
                                 List<string> versionTags = new List<string>() { "[Go back]" };
-                                foreach (var item in releases)
+                                foreach (var release in releases)
                                 {
-                                    versionTags.Add((item.PreRelease ? "(PreRelease) " : "") + item.VersionTag);
+                                    //Used to mark stuff
+                                    string prefix = "";
+                                    if (release.IsPreRelease)
+                                    {
+                                        prefix += "(Pre-release) ";
+                                    }
+                                    versionTags.Add(prefix + release.ReleaseTag);
                                 }
                                 selectedVersion = pr.SelectionPrompt("Select version", "", versionTags.ToArray(), true, selectedVersion);
 
@@ -265,7 +272,7 @@ namespace FileFinder
                                 }
                                 
                                 ReleaseData cutReleaseData = releases[selectedVersion - 1];
-                                updateLevel = CompareVersions(FileFinderAppVersion, cutReleaseData.VersionTag);
+                                updateLevel = CompareVersions(FileFinderAppVersion, cutReleaseData.ReleaseTag);
 
                                 //The code below executes if an update has been found. In other words: If the current version is older than the newer one...
                                 Console.ForegroundColor = ConsoleColor.DarkGray;
@@ -297,21 +304,21 @@ namespace FileFinder
                                 }
                                 Console.ForegroundColor = ConsoleColor.White;
                                 //Looks like this: v1.2.3 >> v4.5.6
-                                Console.WriteLine(FileFinderAppVersion + " >> " + cutReleaseData.VersionTag);
+                                Console.WriteLine(FileFinderAppVersion + " >> " + cutReleaseData.ReleaseTag);
                                 Console.ForegroundColor = ConsoleColor.DarkGray;
                                 Console.WriteLine();
                                 //Release name
                                 Console.WriteLine("Release name: ");
                                 Console.ForegroundColor = ConsoleColor.White;
                                 //text
-                                Console.WriteLine(cutReleaseData.VersionTitle);
+                                Console.WriteLine(cutReleaseData.ReleaseTitle);
                                 Console.ForegroundColor = ConsoleColor.DarkGray;
                                 Console.WriteLine();
                                 //Release description
                                 Console.WriteLine("Release description: ");
                                 Console.ForegroundColor = ConsoleColor.White;
                                 //test
-                                Console.WriteLine(cutReleaseData.VersionDescription.Replace("\\r\\n", "\n"));
+                                Console.WriteLine(cutReleaseData.ReleaseDescription.Replace("\\r\\n", "\n"));
                                 Console.WriteLine();
                                 Console.ResetColor();
 
@@ -327,7 +334,9 @@ namespace FileFinder
                                     Console.WriteLine("Updater: Downloading release");
 
                                     Logger.LogToFile("File download started", 0, Logger.UrgencyLevel.Info);
-                                    DownloadFile("https://github.com/GermanBread/FileFinderGit/releases/download/" + cutReleaseData.VersionTag + "/FileFinder" + AppExtension, destPath + DirNavigationChar + "FileFinder_updater" + AppExtension);
+                                    string DownloadURL = cutReleaseData.ReleaseAssets.Find(a => a.AssetName.Equals(AppName + AppExtension)).AssetDownloadURL;
+                                    Logger.LogToFile($"Downloading {DownloadURL}", 0, Logger.UrgencyLevel.Info);
+                                    DownloadFile(DownloadURL, destPath + DirNavigationChar + "FileFinder_updater" + AppExtension);
                                     Logger.LogToFile("File download completed", 0, Logger.UrgencyLevel.Info);
                                     
                                     //The following step is neccessary for UNIX machines because files require "execute permissions"
@@ -339,7 +348,7 @@ namespace FileFinder
 
                                     //Now duplicate the executable to avoid a headache later
                                     Logger.LogToFile("Duplicating updater", 0, Logger.UrgencyLevel.Info);
-                                    File.Copy(destPath + DirNavigationChar + "FileFinder_updater" + AppExtension, destPath + DirNavigationChar + "FileFinder" + AppExtension);
+                                    File.Copy(destPath + DirNavigationChar + "FileFinder_updater" + AppExtension, destPath + DirNavigationChar + AppName + AppExtension);
 
                                     Console.WriteLine("Updater: Starting updater");
                                     Console.WriteLine("Updater: Starting " + destPath + DirNavigationChar + "FileFinder_updater" + AppExtension);
@@ -362,6 +371,7 @@ namespace FileFinder
                                 catch (Exception caughtException)
                                 {
                                     Logger.LogToFile("Download failed", 0, Logger.UrgencyLevel.Error);
+                                    Logger.LogToFile($"Message {caughtException.Message}", 0, Logger.UrgencyLevel.Info);
                                     Console.ForegroundColor = ConsoleColor.Red;
                                     Console.WriteLine("Updater: Error while downloading release");
                                     Console.ForegroundColor = ConsoleColor.Yellow;
@@ -412,7 +422,7 @@ namespace FileFinder
                 while (!settingsMenu.DrawSettings("FileFinder settings manager " + FileFinderAppVersion)) {}
                 
                 //variables that depend on the settings manager
-                string Path = settingsMenu.settings[0].StrValueLabels[1];
+                string SourcePath = settingsMenu.settings[0].StrValueLabels[1];
                 string TargetPath = settingsMenu.settings[1].StrValueLabels[1];
                 int FileNameType = settingsMenu.settings[3].IntSelection;
                 bool SortingEnabled = settingsMenu.settings[4].IntSelection == 1;
@@ -437,7 +447,7 @@ namespace FileFinder
 
                 //write to file
                 Logger.LogToFile("Arguments:", 1, Logger.UrgencyLevel.Info);
-                Logger.LogToFile($"Set[0] = {Path}", 1, Logger.UrgencyLevel.Info);
+                Logger.LogToFile($"Set[0] = {SourcePath}", 1, Logger.UrgencyLevel.Info);
                 Logger.LogToFile($"Set[1] = {TargetPath}", 1, Logger.UrgencyLevel.Info);
                 Logger.LogToFile($"Set[2] = {FileNameType}", 1, Logger.UrgencyLevel.Info);
                 Logger.LogToFile($"Set[3] = {OverwriteType}", 1, Logger.UrgencyLevel.Info);
@@ -471,13 +481,13 @@ namespace FileFinder
             Console.Clear();
             Console.SetCursorPosition(0, 0);
             
-            Console.WriteLine("Looking for files in \"" + Path + "\"");
+            Console.WriteLine("Looking for files in \"" + SourcePath + "\"");
             //define how strings should be compared
             StringComparison stringComparisonType = StringComparison.OrdinalIgnoreCase;
             //look for files with certain extensions
             try
             {
-                FilePaths.AddRange(Directory.EnumerateFiles(Path, "*", SearchOption.AllDirectories)
+                FilePaths.AddRange(Directory.EnumerateFiles(SourcePath, "*", SearchOption.AllDirectories)
                  .Where(s => s.EndsWith(".bmp", stringComparisonType) || s.EndsWith(".gif", stringComparisonType) || s.EndsWith(".jpg", stringComparisonType)
                   || s.EndsWith(".png", stringComparisonType) || s.EndsWith(".avi", stringComparisonType) || s.EndsWith(".mov", stringComparisonType)
                    || s.EndsWith(".mp4", stringComparisonType)));
@@ -728,22 +738,32 @@ namespace FileFinder
         public class ReleaseData
         {
             [JsonPropertyName("tag_name")]
-            public string VersionTag { get; set; }
+            public string ReleaseTag { get; set; }
             [JsonPropertyName("name")]
-            public string VersionTitle { get; set; }
+            public string ReleaseTitle { get; set; }
             [JsonPropertyName("body")]
-            public string VersionDescription { get; set; }
+            public string ReleaseDescription { get; set; }
             [JsonPropertyName("prerelease")]
-            public bool PreRelease { get; set; }
+            public bool IsPreRelease { get; set; }
+            [JsonPropertyName("assets")]
+            public List<ReleaseAssetsData> ReleaseAssets { get; set; }
+        }
+
+        public class ReleaseAssetsData
+        {
+            [JsonPropertyName("name")]
+            public string AssetName { get; set; }
+            [JsonPropertyName("browser_download_url")]
+            public string AssetDownloadURL { get; set; }
         }
 
         public class Logger
         {
             public static int MessageID = 0;
             public static Dictionary<int, StreamWriter> LogFiles = new Dictionary<int, StreamWriter>();
-            public static void CreateLog(string Path, int ID)
+            public static void CreateLog(string SourcePath, int ID)
             {
-                LogFiles.Add(ID, new StreamWriter(Path));
+                LogFiles.Add(ID, new StreamWriter(SourcePath));
                 LogFiles.TryGetValue(ID, out StreamWriter writer);
                 writer.WriteLine($"Log file created with ID {ID}");
                 writer.WriteLine($"Local time is {DateTime.Now}");
@@ -960,17 +980,17 @@ namespace FileFinder
             //3 = major update >>> update
 
             //compare versions            
-            //compare patch
+            //compare major
             if (firstSplit[0] < secondSplit[0])
             {
                 updateLevel = 3;
             }
             //compare minor
-            else if (firstSplit[1] < secondSplit[2])
+            else if (firstSplit[1] < secondSplit[1])
             {
                 updateLevel = 2;
             }
-            //compare major
+            //compare patch
             else if (firstSplit[2] < secondSplit[2])
             {
                 updateLevel = 1;
