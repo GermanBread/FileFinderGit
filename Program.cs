@@ -35,7 +35,7 @@ namespace FileFinder
                 string AppName = "FileFinder";
                 string AppExtension = IsUNIX ? ".x86-64" : ".exe";
                 //Release definition
-                string FileFinderAppVersion = "v2.1.0";
+                string FileFinderAppVersion = "v2.1.1";
 
                 #endregion
 
