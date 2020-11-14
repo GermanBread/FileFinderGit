@@ -53,11 +53,6 @@ namespace FileFinder
                     return;
                 }
 
-                if (Environment.UserName == "root")
-                {
-                    Console.WriteLine("Startup: App is being run as root");
-                }
-
                 #endregion
                 
                 #region Help argument
@@ -83,7 +78,8 @@ namespace FileFinder
                         return;
                     }
                     
-                    string appDirPath = args[0];
+                    //Scuffed
+                    string appDirPath = args[0].Replace("─", " ");
                     
                     Console.ForegroundColor = ConsoleColor.DarkGray;
                     Console.WriteLine("Updater: Preparing");
@@ -103,7 +99,7 @@ namespace FileFinder
                     catch(Exception caughtException)
                     {
                         Console.ForegroundColor = ConsoleColor.Red;
-                        Console.WriteLine("Updater: Update failed, make sure the app's path doesn't contain spaces!");
+                        Console.WriteLine("Updater: Update failed");
                         Console.ResetColor();
                         Console.WriteLine("Exception: " + caughtException.Message);
                         return;
@@ -226,14 +222,9 @@ namespace FileFinder
                         if (updateLevel > 0 || args.Contains("-u"))
                         {
                             Logger.LogToFile("Update has been found", 0, Logger.UrgencyLevel.Info);
-                            //This variable is used to initiate the loop
-                            bool firstTime = true;
                             int action = 0;
-                            while (action == 2 || firstTime)
+                            do
                             {
-                                //The loop has started, now set this variable to false
-                                firstTime = false;
-
                                 //Create a "Prompts" object to be used
                                 Prompts pr = new Prompts();
                                 
@@ -266,7 +257,8 @@ namespace FileFinder
                                 {
                                     break;
                                 }
-                            }
+                            } while (action == 2);
+
                             //The user chose to update
                             if (action > 0)
                             {
@@ -364,7 +356,8 @@ namespace FileFinder
                                     //Now start a thread which will replace the main thread.
                                     ProcessStartInfo startInfo = new ProcessStartInfo();
                                     startInfo.FileName = destPath + DirNavigationChar + "FileFinder_updater" + AppExtension;
-                                    startInfo.Arguments = Directory.GetCurrentDirectory();
+                                    //This is scuffed, but it'll do
+                                    startInfo.Arguments = Directory.GetCurrentDirectory().Replace(" ", "─");
                                     startInfo.WorkingDirectory = destPath;
                                     startInfo.CreateNoWindow = false;
                                     Logger.LogToFile("Starting updater", 0, Logger.UrgencyLevel.Info);
@@ -828,22 +821,21 @@ namespace FileFinder
             Console.Clear();
             Console.ForegroundColor = ConsoleColor.DarkGray;
             Console.WriteLine("Writing to log");
-            try
+            foreach (var logFile in Logger.LogFiles)
             {
-                foreach (var logFile in Logger.LogFiles)
+                try
                 {
                     Logger.LogToFile($"{cancelEvents.SpecialKey} was recieved", logFile.Key, Logger.UrgencyLevel.Info);
-                    Logger.SaveLog(logFile.Key);
+                    Logger.SaveLog(logFile.Key);    
                 }
-            }
-            catch (NullReferenceException)
-            {
-                Console.WriteLine("Log file does not exist");
-            }
-            catch (Exception excep)
-            {
-                Console.WriteLine("Unknown error while writing");
-                Console.WriteLine(excep.Message);
+                catch (NullReferenceException)
+                {
+                }
+                catch (Exception excep)
+                {
+                    Console.WriteLine("Unknown error while writing");
+                    Console.WriteLine(excep.Message);
+                }
             }
             Console.ResetColor();
             Console.WriteLine("Programm exit");
