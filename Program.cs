@@ -1,26 +1,44 @@
-﻿using System;
+﻿//System
+using System;
 using System.IO;
-using System.Collections.Generic;
+using System.Net;
 using System.Linq;
 using System.Threading;
-using System.Diagnostics;
-using System.Net;
 using System.Text.Json;
+using System.Diagnostics;
+using System.Collections.Generic;
 using System.Text.Json.Serialization;
-using MetadataExtractor.Formats.Exif;
+//Metadata Extractor
 using MetadataExtractor.Formats.Xmp;
+using MetadataExtractor.Formats.Exif;
+//Custom
 using UserInterface;
 
 namespace FileFinder
 {
     class Program
     {
-        #region Global Variables
-
-        #endregion
-
         static void Main(string[] args)
-        {             
+        {                        
+            #region Help argument
+
+            //show all possible arguments
+            if (args.Contains("-h"))
+            {
+                Console.ForegroundColor = ConsoleColor.Green;
+                Console.WriteLine("Available arguments:");
+                Console.WriteLine("\"-u\" force update menu to show up");
+                return;
+            }
+
+            #endregion
+            
+            //Disable the cursor
+            Console.CursorVisible = false;
+
+            //Call Init();
+            //FileFinder.Init(ref args);
+
             #region Program Setup
                 
                 #region Variables
@@ -35,7 +53,7 @@ namespace FileFinder
                 string AppName = "FileFinder";
                 string AppExtension = IsUNIX ? ".x86-64" : ".exe";
                 //Release definition
-                string FileFinderAppVersion = "v2.1.1";
+                string FileFinderAppVersion = "v3.0.0";
 
                 #endregion
 
@@ -50,19 +68,6 @@ namespace FileFinder
                 //Exit if the programm isn't running in a console window!
                 if (Console.WindowHeight == 0 && Console.WindowWidth == 0 && !IsInTEMP)
                 {
-                    return;
-                }
-
-                #endregion
-                
-                #region Help argument
-
-                //show all possible arguments
-                if (args.Contains("-h"))
-                {
-                    Console.ForegroundColor = ConsoleColor.Green;
-                    Console.WriteLine("Available arguments:");
-                    Console.WriteLine("\"-u\" force update menu to show up");
                     return;
                 }
 
