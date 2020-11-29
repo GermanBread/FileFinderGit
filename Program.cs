@@ -33,11 +33,11 @@ namespace FileFinder
 
             #endregion
             
-            //Disable the cursor
-            Console.CursorVisible = false;
-
             //Call Init();
-            //FileFinder.Init(ref args);
+            FileFinder.Init(ref args);
+
+            //Code after this is obsolete
+            return;
 
             #region Program Setup
                 
@@ -413,26 +413,26 @@ namespace FileFinder
                 SettingsUI settingsMenu = new SettingsUI();
 
                 //paths
-                settingsMenu.settings.Add(new SettingsEntry("Source path", SettingsEntry.InteractionType.selectableAndInteractable, new List<string>() { "$Path", ""}, 0, "Path to the files you want sorted i.e. \"Family_pictures\""));
-                settingsMenu.settings.Add(new SettingsEntry("Destination path", SettingsEntry.InteractionType.selectableAndInteractable, new List<string>() { "$Path", "" }, 0, "Path to the destination folder i.e. \"Family_pictures_sorted\""));
+                settingsMenu.Settings.Add(new SettingsEntry("Source path", SettingsEntry.InteractionType.selectableAndInteractable, new List<string>() { "$Path", ""}, 0, "Path to the files you want sorted i.e. \"Family_pictures\""));
+                settingsMenu.Settings.Add(new SettingsEntry("Destination path", SettingsEntry.InteractionType.selectableAndInteractable, new List<string>() { "$Path", "" }, 0, "Path to the destination folder i.e. \"Family_pictures_sorted\""));
                 //options
-                settingsMenu.settings.Add(new SettingsEntry("", SettingsEntry.InteractionType.nonSelectableAndNonInteractable, new List<string>() { "" }, 0));
-                settingsMenu.settings.Add(new SettingsEntry("Should filenames be changed?", SettingsEntry.InteractionType.selectableAndInteractable, new List<string>() { "No, do not change the name", "Add date only", "Add date and iterator" }, 2));
-                settingsMenu.settings.Add(new SettingsEntry("Should files be sorted?", SettingsEntry.InteractionType.selectableAndInteractable, new List<string>() { "No", "Yes" }, 1));
-                settingsMenu.settings.Add(new SettingsEntry("Should duplicates be overwritten?", SettingsEntry.InteractionType.selectableAndInteractable, new List<string>() { "No, always keep the duplicate", "Only overwrite if source file is newer", "Only overwrite if source file is older", "Yes, always overwrite the duplicate" }, 1));
-                settingsMenu.settings.Add(new SettingsEntry("", SettingsEntry.InteractionType.nonSelectableAndNonInteractable, new List<string>() { "" }, 0));
-                settingsMenu.settings.Add(new SettingsEntry("", SettingsEntry.InteractionType.selectableAndInteractable, new List<string>() { "$Done" }, 0));
+                settingsMenu.Settings.Add(new SettingsEntry("", SettingsEntry.InteractionType.nonSelectableAndNonInteractable, new List<string>() { "" }, 0));
+                settingsMenu.Settings.Add(new SettingsEntry("Should filenames be changed?", SettingsEntry.InteractionType.selectableAndInteractable, new List<string>() { "No, do not change the name", "Add date only", "Add date and iterator" }, 2));
+                settingsMenu.Settings.Add(new SettingsEntry("Should files be sorted?", SettingsEntry.InteractionType.selectableAndInteractable, new List<string>() { "No", "Yes" }, 1));
+                settingsMenu.Settings.Add(new SettingsEntry("Should duplicates be overwritten?", SettingsEntry.InteractionType.selectableAndInteractable, new List<string>() { "No, always keep the duplicate", "Only overwrite if source file is newer", "Only overwrite if source file is older", "Yes, always overwrite the duplicate" }, 1));
+                settingsMenu.Settings.Add(new SettingsEntry("", SettingsEntry.InteractionType.nonSelectableAndNonInteractable, new List<string>() { "" }, 0));
+                settingsMenu.Settings.Add(new SettingsEntry("", SettingsEntry.InteractionType.selectableAndInteractable, new List<string>() { "$Done" }, 0));
 
                 //loop until the user presses "DONE"
                 while (!settingsMenu.DrawSettings("FileFinder settings manager " + FileFinderAppVersion)) {}
                 
                 //variables that depend on the settings manager
-                string SourcePath = settingsMenu.settings[0].StrValueLabels[1];
-                string TargetPath = settingsMenu.settings[1].StrValueLabels[1];
-                int FileNameType = settingsMenu.settings[3].IntSelection;
-                bool SortingEnabled = settingsMenu.settings[4].IntSelection == 1;
-                int OverwriteType = settingsMenu.settings[5].IntSelection;
-                bool CreateTargetDir = settingsMenu.settings[6].IntSelection == 1;
+                string SourcePath = settingsMenu.Settings[0].StrValueLabels[1];
+                string TargetPath = settingsMenu.Settings[1].StrValueLabels[1];
+                int FileNameType = settingsMenu.Settings[3].IntSelection;
+                bool SortingEnabled = settingsMenu.Settings[4].IntSelection == 1;
+                int OverwriteType = settingsMenu.Settings[5].IntSelection;
+                bool CreateTargetDir = settingsMenu.Settings[6].IntSelection == 1;
 
                 #endregion
 

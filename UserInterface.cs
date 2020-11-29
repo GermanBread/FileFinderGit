@@ -19,11 +19,12 @@ namespace UserInterface
             nonInteractable = 1,
             nonSelectableAndNonInteractable = 2,
         }
-        public string StrLabel { get; private set; }
-        public List<string> StrValueLabels { get; private set; }
+        public string StrLabel { get; set; }
+        public List<string> StrValueLabels { get; set; }
         public int IntSelection { get; set; }
-        public InteractionType EnumInteractable { get; private set; }
-        public string StrDescription { get; private set; }
+        public InteractionType EnumInteractable { get; set; }
+        public string StrDescription { get; set; }
+        public SettingsEntry() { }
         public SettingsEntry(string Label, InteractionType Interactable, List<string> ValueLabels, int DefaultSelection, string Description = null)
         {
             StrLabel = Label;
@@ -39,7 +40,7 @@ namespace UserInterface
     /// </summary>
     public class SettingsUI
     {
-        public List<SettingsEntry> settings = new List<SettingsEntry>();
+        public List<SettingsEntry> Settings = new List<SettingsEntry>();
         int selectedSetting;
         public SettingsUI()
         {
@@ -58,7 +59,7 @@ namespace UserInterface
             int i;
 
             //make sure "selectedSetting" int doesn't go out of bounds
-            selectedSetting = Math.Clamp(selectedSetting, 0, settings.Count);
+            selectedSetting = Math.Clamp(selectedSetting, 0, Settings.Count);
 
             //clear console
             Console.Clear();
@@ -68,14 +69,14 @@ namespace UserInterface
             Console.SetCursorPosition(5, 5);
             Console.WriteLine(title + " [Arrow Keys, Enter]");
 
-            //while (settings[selectedSetting].EnumInteractable == SettingsEntry.InteractionType.nonSelectableAndNonInteractable)
+            //while (Settings[selectedSetting].EnumInteractable == SettingsEntry.InteractionType.nonSelectableAndNonInteractable)
             //{
             //    selectedSetting++;
             //} TODO: fix
             
-            for (i = 0; i < settings.Count; i++)
+            for (i = 0; i < Settings.Count; i++)
             {
-                SettingsEntry settingsElement = settings[i];
+                SettingsEntry settingsElement = Settings[i];
 
                 settingsElement.IntSelection = Math.Clamp(settingsElement.IntSelection, 0, settingsElement.StrValueLabels.Count - 1);
                 
@@ -150,7 +151,7 @@ namespace UserInterface
                 Console.Write(LoopString("-", Console.WindowWidth) + "\n");                               
 
                 //show description of selected element
-                if (settingsElement.StrDescription != null && settingsElement == settings[selectedSetting])
+                if (settingsElement.StrDescription != null && settingsElement == Settings[selectedSetting])
                 {
                     Console.Write("Description: " + settingsElement.StrDescription);
                 }
@@ -162,14 +163,14 @@ namespace UserInterface
             //Decide what to do with the keys
             try 
             {
-                SettingsEntry currentSetting = settings[selectedSetting];
-                bool isSettingInteractable = currentSetting.EnumInteractable == SettingsEntry.InteractionType.selectableAndInteractable;
+                SettingsEntry CurrentSetting = Settings[selectedSetting];
+                bool IsSettingInteractable = CurrentSetting.EnumInteractable == SettingsEntry.InteractionType.selectableAndInteractable;
                 
                 switch (pressedKey)
                 {
                     case ConsoleKey.UpArrow:
                         selectedSetting--;
-                        while (settings[selectedSetting].EnumInteractable == SettingsEntry.InteractionType.nonSelectableAndNonInteractable)
+                        while (Settings[selectedSetting].EnumInteractable == SettingsEntry.InteractionType.nonSelectableAndNonInteractable)
                         {
                             selectedSetting--;
                         }
@@ -177,43 +178,43 @@ namespace UserInterface
 
                     case ConsoleKey.DownArrow:
                         selectedSetting++;
-                        while (settings[selectedSetting].EnumInteractable == SettingsEntry.InteractionType.nonSelectableAndNonInteractable)
+                        while (Settings[selectedSetting].EnumInteractable == SettingsEntry.InteractionType.nonSelectableAndNonInteractable)
                         {
                             selectedSetting++;
                         }
                         break;
 
                     case ConsoleKey.LeftArrow:
-                        if (isSettingInteractable)
+                        if (IsSettingInteractable)
                         {
-                            currentSetting.IntSelection--;
+                            CurrentSetting.IntSelection--;
                         }
                         break;
 
                     case ConsoleKey.RightArrow:
-                        if (isSettingInteractable)
+                        if (IsSettingInteractable)
                         {
-                            currentSetting.IntSelection++;
+                            CurrentSetting.IntSelection++;
                         }
                         break;
 
                     case ConsoleKey.Enter:
-                        if (currentSetting.StrValueLabels[0] == "$Done" && isSettingInteractable)
+                        if (CurrentSetting.StrValueLabels[0] == "$Done" && IsSettingInteractable)
                         {
                             isDone = true;
                         }
-                        else if (currentSetting.StrValueLabels[0] == "$Input" && isSettingInteractable)
+                        else if (CurrentSetting.StrValueLabels[0] == "$Input" && IsSettingInteractable)
                         {
-                            currentSetting.StrValueLabels[1] = new Prompts().UserInput();
+                            CurrentSetting.StrValueLabels[1] = new Prompts().UserInput();
                         }
-                        else if (currentSetting.StrValueLabels[0] == "$Path" && isSettingInteractable)
+                        else if (CurrentSetting.StrValueLabels[0] == "$Path" && IsSettingInteractable)
                         {
-                            FileExplorer fe = new FileExplorer(currentSetting.StrValueLabels[1]);
+                            FileExplorer fe = new FileExplorer(CurrentSetting.StrValueLabels[1]);
                             while (!fe.FileExplorerWindow()) {}
-                            currentSetting.StrValueLabels[1] = fe.selectedPath;
+                            CurrentSetting.StrValueLabels[1] = fe.selectedPath;
                             if (fe.selectedPath.Length == 0)
                             {
-                                settings[selectedSetting].StrValueLabels[1] = "";
+                                Settings[selectedSetting].StrValueLabels[1] = "";
                             }
                         }
                         break;
@@ -223,7 +224,7 @@ namespace UserInterface
             {
             }
             //Clamp "selected setting" just in case :)
-            selectedSetting = Math.Clamp(selectedSetting, 0, settings.Count - 1);
+            selectedSetting = Math.Clamp(selectedSetting, 0, Settings.Count - 1);
             
             //Return if the done button has been pressed
             return isDone;
@@ -639,309 +640,6 @@ namespace UserInterface
                 outputString += input;
             }
             return outputString;
-        }
-    }
-
-    /// <summary>
-    /// This class contains methods that, when called, show a notification at a position set in a variable, inside the console's window. (Similiar to the BDD plugin "InAppNotifications")
-    /// </summary>
-    public static class NotificationsManager
-    {
-        /*public enum NotificationPosition
-        {
-            TopLeft = 0,
-            TopRight = 1,
-            BottomLeft = 2,
-            BottomRight = 3
-        }*/
-        private static Dictionary<int, TaskData> notifTasks = new Dictionary<int, TaskData>();
-        /// <summary>
-        /// Summons a notification
-        /// </summary>
-        /// <param name="title">The title that appears at the top</param>
-        /// <param name="message">The message to be displayed</param>
-        /// <param name="duration">The duration in milliseconds. 0 makes the message stay</param>
-        /// <param name="hideProgress">Hides the progress and displays a little animation instead</param>
-        /// <param name="primaryColor">Primary progress bar color to be used</param>
-        /// <param name="secondaryColor">Secondary progress bar color to be used</param>
-        /// <returns>A unique message ID</returns>
-        public static int ShowMessage(string title, string message, int duration, bool hideProgress, ConsoleColor primaryColor, ConsoleColor secondaryColor)
-        {
-            int maxWidth = 40;
-            int maxHeight = 15;
-            int calculatedWidth = Math.Clamp(message.Length + 2, title.Length + 4, maxWidth);
-            int calculatedHeight = (int)Math.Clamp(Math.Floor(message.Length / (float)maxWidth) + 3, 3, maxHeight);
-            int maxTextLength = (maxWidth - 2) * (calculatedHeight - 2);
-            string trimmedMessage = message.Substring(0, Math.Clamp(maxTextLength, 0, message.Length));
-            //Messagebox method
-            int key = notifTasks.Count;
-            var tokenSource = new CancellationTokenSource();
-            CancellationToken ct = tokenSource.Token;
-            Task task = Task.Run(() => MessageBox(Console.WindowWidth - calculatedWidth - 4, 2, calculatedWidth, calculatedHeight, title, trimmedMessage, duration, hideProgress, primaryColor, secondaryColor, key), ct);
-            notifTasks.Add(key, new TaskData{task = task, cancellationToken = ct, CancellationTokenSource = tokenSource});
-            return key;
-        }
-        /// <summary>
-        /// Summons a notification that is as big as the console's window
-        /// </summary>
-        /// <param name="title">The title that appears at the top</param>
-        /// <param name="message">The message to be displayed</param>
-        /// <param name="duration">The duration in milliseconds. 0 makes the message stay</param>
-        /// <param name="hideProgress">Hides the progress and displays a little animation instead</param>
-        /// <param name="primaryColor">Primary progress bar color to be used</param>
-        /// <param name="secondaryColor">Secondary progress bar color to be used</param>
-        /// <returns>A unique message ID</returns>
-        public static int ShowFullscreenMessage(string title, string message, int duration, bool hideProgress, ConsoleColor primaryColor, ConsoleColor secondaryColor)
-        {
-            int calculatedWidth = Console.WindowWidth;
-            int calculatedHeight = Console.WindowHeight;
-            int maxTextLength = (calculatedWidth - 2) * (calculatedHeight - 2);
-            string trimmedMessage = message.Substring(0, Math.Clamp(maxTextLength, 0, message.Length));
-            //Messagebox method
-            int key = notifTasks.Count;
-            var tokenSource = new CancellationTokenSource();
-            CancellationToken ct = tokenSource.Token;
-            Task task = Task.Run(() => MessageBox(0, 0, calculatedWidth, calculatedHeight, title, trimmedMessage, duration, hideProgress, primaryColor, secondaryColor, key), ct);
-            notifTasks.Add(key, new TaskData{task = task, cancellationToken = ct, CancellationTokenSource = tokenSource});
-            return key;
-        }
-        /// <summary>
-        /// Waits for the message to disappear
-        /// </summary>
-        /// <param name="ID"></param>
-        public static void AwaitMessage(int ID)
-        {
-            notifTasks[ID].task.Wait();
-            notifTasks.Remove(ID);
-        }
-        /// <summary>
-        /// This is the function that takes care of drawing the notification
-        /// </summary>
-        /// <param name="top"></param>
-        /// <param name="left"></param>
-        /// <param name="width"></param>
-        /// <param name="height"></param>
-        /// <param name="title"></param>
-        /// <param name="message"></param>
-        /// <param name="duration"></param>
-        /// <param name="inProgress"></param>
-        /// <param name="minimal"></param>
-        /// <param name="barColor"></param>
-        /// <param name="altBarColor"></param>
-        private static void MessageBox(int left, int top, int width, int height, string title, string message, int duration, bool hideProgress, ConsoleColor barColor, ConsoleColor altBarColor, int key)
-        {
-            Stopwatch sw = new Stopwatch();
-            sw.Start();
-            int loopCount = duration == 0 ? 999999999 : duration / 10;
-            for (int repeat = 0; repeat < loopCount; repeat++)
-            {   
-                //If a cancellation is requested
-                if (notifTasks[key].cancellationToken.IsCancellationRequested)
-                {
-                    break;
-                }
-                
-                //Restart thee stopwatch
-                sw.Restart();
-                //Change the window color to gray to add some animation
-                ConsoleColor windowColor = repeat > 10 && repeat < loopCount - 10 ? ConsoleColor.White : ConsoleColor.DarkGray;
-                //int verticalOffset = (height * notificationsCount + 1);
-                int verticalOffset = notifTasks.Keys.ToList().IndexOf(key) * (height + 3);
-                
-                //UNIX and UNIX-alike systems use box drawing characters
-                if (System.Environment.OSVersion.Platform.Equals(System.PlatformID.Unix))
-                {
-                    Console.ForegroundColor = windowColor;
-                    Console.SetCursorPosition(left, top + verticalOffset);
-                    //This draws the top part
-                    Console.Write("┌" + LoopString("─", (int)Math.Floor(width / 2f - title.Length / 2f) - 2) + $"╴{title}╶" + LoopString("─", (int)Math.Ceiling(width / 2f - title.Length / 2f) - 2) + "┐");
-                    //This draws the body
-                    for (var i = 1; i < height - 1; i++)
-                    {
-                        Console.SetCursorPosition(left, top + i + verticalOffset);
-                        Console.Write("│" + LoopString(" ", width - 2) + "│");
-                    }
-                    //This splits the string into an array by index so that it can be put in place more easily
-                    string[] formattedMessage;
-                    try
-                    {
-                        formattedMessage = SplitByLength(message, width - 2).ToArray();
-                    }
-                    catch
-                    {
-                        formattedMessage = new string[]{message};
-                    }
-                    for (int l = 0; l < formattedMessage.Length; l++)
-                    {
-                        Console.SetCursorPosition(left + 1, top + 1 + l + verticalOffset);
-                        Console.Write(formattedMessage[l]);
-                    }
-                    //This is for the bottom part
-                    for (int elapsed = 0; elapsed < 10; elapsed++)
-                    {
-                        //Clone the msec value from the stopwatch
-                        int msec = (int)sw.ElapsedMilliseconds;
-                        Console.SetCursorPosition(left, top + height - 1 + verticalOffset);
-                        Console.Write("└╴");
-                        //Show a progress bar
-                        if (!hideProgress && duration > 0)
-                        {
-                            Console.ForegroundColor = barColor;
-                            Console.BackgroundColor = ConsoleColor.DarkGray;
-                            Console.Write(BarGraph(repeat * 10 + elapsed, duration, width - 4));
-                            Console.ResetColor();
-                            Console.ForegroundColor = windowColor;
-                        }
-                        //Don't show the progress
-                        else if (hideProgress)
-                        {
-                            Console.ForegroundColor = repeat % 100 < 50 ? barColor : altBarColor;
-                            Console.BackgroundColor = repeat % 100 >= 50 ? barColor : altBarColor;
-                            Console.Write(BarGraph(repeat % 50, 50, width - 4));
-                            Console.ResetColor();
-                            Console.ForegroundColor = windowColor;
-                        }
-                        //Just blink
-                        else
-                        {
-                            Console.BackgroundColor = repeat % 100 >= 50 ? barColor : altBarColor;
-                            Console.Write(LoopString(" ", width - 4));
-                            Console.ResetColor();
-                            Console.ForegroundColor = windowColor;
-                        }
-                        Console.Write("╶┘");
-                        //Line break at the end
-                        Thread.Sleep(Math.Clamp(1 - (msec - (int)sw.ElapsedMilliseconds), 0, 1000));
-                    }
-                }
-                //Since Windows doesn't support fancy characters
-                else
-                {
-                    Console.ForegroundColor = windowColor;
-                    Console.SetCursorPosition(left, top + verticalOffset);
-                    //This draws the top part
-                    Console.Write("#" + LoopString("-", (int)Math.Floor(width / 2f - title.Length / 2f) - 2) + $"-{title}-" + LoopString("-", (int)Math.Ceiling(width / 2f - title.Length / 2f) - 2) + "#");
-                    //This draws the body
-                    for (var i = 1; i < height - 1; i++)
-                    {
-                        Console.SetCursorPosition(left, top + i + verticalOffset);
-                        Console.Write("|" + LoopString(" ", width - 2) + "|");
-                    }
-                    //This splits the string into an array by index so that it can be put in place more easily
-                    string[] formattedMessage;
-                    try
-                    {
-                        formattedMessage = SplitByLength(message, width - 2).ToArray();
-                    }
-                    catch
-                    {
-                        formattedMessage = new string[]{message};
-                    }
-                    for (int l = 0; l < formattedMessage.Length; l++)
-                    {
-                        Console.SetCursorPosition(left + 1, top + 1 + l + verticalOffset);
-                        Console.Write(formattedMessage[l]);
-                    }
-                    //This is for the bottom part
-                    for (int elapsed = 0; elapsed < 10; elapsed++)
-                    {
-                        //Clone the msec value from the stopwatch
-                        int msec = (int)sw.ElapsedMilliseconds;
-                        Console.SetCursorPosition(left, top + height - 1 + verticalOffset);
-                        Console.Write("#-");
-                        //Show a progress bar
-                        if (!hideProgress && duration > 0)
-                        {
-                            Console.ForegroundColor = barColor;
-                            Console.BackgroundColor = ConsoleColor.DarkGray;
-                            Console.Write(BarGraph(repeat * 10 + elapsed, duration, width - 4));
-                            Console.ResetColor();
-                            Console.ForegroundColor = windowColor;
-                        }
-                        //Don't show the progress
-                        else if (hideProgress)
-                        {
-                            Console.ForegroundColor = repeat % 100 < 50 ? barColor : altBarColor;
-                            Console.BackgroundColor = repeat % 100 >= 50 ? barColor : altBarColor;
-                            Console.Write(BarGraph(repeat % 50, 50, width - 4));
-                            Console.ResetColor();
-                            Console.ForegroundColor = windowColor;
-                        }
-                        //Just blink
-                        else
-                        {
-                            Console.BackgroundColor = repeat % 100 >= 50 ? barColor : altBarColor;
-                            Console.Write(LoopString(" ", width - 4));
-                            Console.ResetColor();
-                            Console.ForegroundColor = windowColor;
-                        }
-                        Console.Write("-#");
-                        //Line break at the end
-                        Console.WriteLine();
-                    }
-                }
-                //Sleep one millisecond to keep the progress bar consistent
-                Thread.Sleep(Math.Clamp(1 - (int)sw.ElapsedMilliseconds, 0, 1000));
-            }
-            sw.Stop();
-            for (var i = 0; i < height; i++)
-            {
-                Console.SetCursorPosition(left, top + i);
-                Console.WriteLine(LoopString(" ", width));
-            }
-            //Before returning, start a new Task that deletes the current on
-            Task.Factory.StartNew(() => {
-                Thread.Sleep(100);
-                notifTasks.Remove(key);
-            });
-            //Now return
-            return;
-        }
-        /// <summary>
-        /// Sends a cancellation request to the notification task.
-        /// </summary>
-        /// <param name="key"></param>
-        public static void CloseMessage(int ID)
-        {
-            notifTasks[ID].CancellationTokenSource.Cancel();
-            notifTasks[ID].task.Wait();
-            notifTasks[ID].CancellationTokenSource.Dispose();
-            notifTasks[ID].task.Dispose();
-            notifTasks.Remove(ID);
-        }
-        private static string BarGraph(int value, int maxValue, int width)
-        {
-            string output = "";
-            string format = System.Environment.OSVersion.Platform == PlatformID.Win32NT ? " █" : " ▏▎▍▌▋▊▉█";
-
-            float ratio = (float)value / (float)maxValue;
-            for (float i = 0; i < width; i++)
-            {
-                output += format[(int)Math.Clamp(((ratio * format.Length) * width) - (i * format.Length), 0, format.Length - 1)];
-            }
-            return output;
-        }
-        private static string LoopString(string input, int loopAmount)
-        {
-            string outputString = "";
-            for (int i = 0; i < loopAmount; i++)
-            {
-                outputString += input;
-            }
-            return outputString;
-        }
-        private static IEnumerable<string> SplitByLength(this string input, int maxLength)
-        {
-            for (int index = 0; index < input.Length; index += maxLength)
-            {
-                yield return input.Substring(index, Math.Min(maxLength, input.Length - index));
-            }
-        }
-        private class TaskData
-        {
-            public Task task = null;
-            public CancellationToken cancellationToken = new CancellationToken();
-            public CancellationTokenSource CancellationTokenSource = new CancellationTokenSource();
         }
     }
 }
