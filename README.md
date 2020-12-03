@@ -2,6 +2,8 @@
 <br>
 ![Last commit](https://img.shields.io/github/last-commit/GermanBread/FileFinderGit)
 
+As of now, this project is discontinued.
+
 # File Finder
 
 A project intended to make it easy to find files scattered across drives.
