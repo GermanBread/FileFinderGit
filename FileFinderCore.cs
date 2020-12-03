@@ -49,9 +49,12 @@ namespace FileFinder
             
             //Variables
             Logger.LogToFile(0, "Instantiated classes", Logger.UrgencyLevel.Success);
-            FFInitData InitData = new FFInitData { };
+            FFInitData InitData = new FFInitData { ConsoleArgs = args };
             FFUpdater FFUpdater = new FFUpdater { };
             FFCore FFMain = new FFCore { };
+
+            //Hide the cursor
+            Console.CursorVisible = false;
 
             //Methods
             try
@@ -62,14 +65,16 @@ namespace FileFinder
                     throw new QuitRequestedException();
                 }
                 
+                //Check for updates and install
                 FFUpdater.DeleteTemp(ref InitData);
                 FFUpdater.FetchUpdates(ref InitData);
                 FFUpdater.CompareUpdates(ref InitData);
-                if (FFUpdater.UpdaterData.UpdateLevel > 0)
+                if (FFUpdater.UpdaterData.UpdateLevel > 0 || args.Contains("-u"))
                 {
                     FFUpdater.ShowUpdateMenu(ref InitData);
                 }
                 
+                //Proceed to the main part
                 FFMain.Settings(ref InitData);
                 FFMain.FindFiles(ref InitData);
                 if (FFMain.CoreData.FilePaths.Count > 0)
@@ -96,6 +101,9 @@ namespace FileFinder
                 Logger.SaveLog(key);
             }
             
+            //The cursor was hidden, now show it again
+            Console.CursorVisible = false;
+
             //Return
             return InitData;
         }
@@ -215,7 +223,7 @@ namespace FileFinder
             System.IO.Stream resStream;
             httpRes = (System.Net.HttpWebResponse) httpReq.GetResponse();
             resStream = httpRes.GetResponseStream();
-        
+
             fileSize = httpRes.ContentLength;
         
             int byteSize;
@@ -241,15 +249,27 @@ namespace FileFinder
             Logger.LogToFile(1, "Duplicating updater", Logger.UrgencyLevel.Info);
             File.Copy(UpdaterData.UpdaterPath + Path.DirectorySeparatorChar + UpdaterData.UpdaterFileName, UpdaterData.UpdaterPath + Path.DirectorySeparatorChar + FileFinder.APP_NAME + FileFinder.APP_EXTENSION);
 
-            Console.WriteLine("Updater: Starting updater: " + UpdaterData.UpdaterPath + Path.DirectorySeparatorChar + UpdaterData.UpdaterFileName);
+            StartUpdater(ref InitData);
+        }
+        /// <summary>
+        /// This method starts the updater, which will be responsible for replacing the main executable
+        /// </summary>
+        public void StartUpdater(ref FFInitData InitData)
+        {
+            Console.WriteLine("Starting updater: " + UpdaterData.UpdaterPath + Path.DirectorySeparatorChar + UpdaterData.UpdaterFileName);
             Console.ResetColor();
             
             //Now start a thread which will replace the main thread.
             ProcessStartInfo startInfo = new ProcessStartInfo();
             startInfo.FileName = UpdaterData.UpdaterPath + Path.DirectorySeparatorChar + UpdaterData.UpdaterFileName;
             //This is scuffed, but it'll do
-            startInfo.Arguments = Directory.GetCurrentDirectory().Replace(" ", "─");
-            startInfo.WorkingDirectory = UpdaterData.UpdaterPath + Path.DirectorySeparatorChar;
+            if (UpdaterData.UpdateLevel >= 0)
+                //New update method
+                startInfo.Arguments = Directory.GetCurrentDirectory().Replace(" ", "─") + FileFinder.APP_NAME + FileFinder.APP_EXTENSION;
+            else
+                //For legacy reasons, will be stripped out sooner or later
+                startInfo.Arguments = Directory.GetCurrentDirectory().Replace(" ", "─");
+            startInfo.WorkingDirectory = UpdaterData.UpdaterPath;
             startInfo.CreateNoWindow = false;
             Logger.LogToFile(1, "Starting updater", Logger.UrgencyLevel.Info);
             Process.Start(startInfo);
@@ -364,6 +384,8 @@ namespace FileFinder
                 return;
             else if (action == 1)
                 UpdaterData.SelectedRelease = 0;
+            else if (action == 2)
+                UpdaterData.SelectedRelease--;
             
             ReleaseData cutReleaseData = UpdaterData.Releases[UpdaterData.SelectedRelease];
             //The code below executes if an update has been found. In other words: If the current version is older than the newer one...
@@ -415,6 +437,10 @@ namespace FileFinder
             Console.WriteLine();
             Console.ResetColor();
 
+            //Before we download the updater, check if it even exists
+            if (UpdaterData.Releases[UpdaterData.SelectedRelease]?.ReleaseAssets?.Find(a => a.AssetDownloadURL.Contains(FileFinder.APP_EXTENSION))?.AssetDownloadURL == null)
+                //No release was found. Throw an exception, call it a day, and let Init() handle the rest
+                throw new FileNotFoundException($"No release was found. Was it deleted?");
             DownloadUpdate(ref InitData);
         }
         /// <summary>
@@ -423,7 +449,20 @@ namespace FileFinder
         /// <param name="initData"></param>
         public void UpdateApp(ref FFInitData InitData)
         {
+            string AppPath = InitData.ConsoleArgs[0].Replace("─", " ");
             
+            //Since my older build don't pass the executable's name alongside the path
+            if (!File.Exists(InitData.ConsoleArgs[0]))
+                //The executable's name will be hard coded to ensure backwards-compatibility
+                AppPath = InitData.ConsoleArgs[0].Replace("─", " ") + "FileFinder" + FileFinder.APP_EXTENSION;
+
+            File.Delete(AppPath);
+            Logger.LogToFile(1, "Deleted executable", Logger.UrgencyLevel.Info);
+            File.Copy(UpdaterData.UpdaterPath + FileFinder.APP_NAME + FileFinder.APP_EXTENSION, AppPath);
+            Logger.LogToFile(1, "Copied new executable", Logger.UrgencyLevel.Info);
+            Console.WriteLine("Update to version {0} completed sucessfully", FileFinder.APP_VERSION);
+
+            throw new QuitRequestedException("Update completed");
         }
 
         /// <summary>
@@ -516,8 +555,6 @@ namespace FileFinder
         }
         public void Settings(ref FFInitData InitData)
         {
-            Console.WriteLine("Settings: If you don't see a menu appear, restart the app");
-                
             Logger.LogToFile(2, "Instantiated \"Settingsmenu\" class", Logger.UrgencyLevel.Success);
             SettingsUI SettingsMenu = new SettingsUI { };
 
@@ -588,7 +625,7 @@ namespace FileFinder
                     "Should duplicates be overwritten?", 
                     SettingsEntry.InteractionType.selectableAndInteractable, 
                     new List<string> { "No, always keep the duplicate", "Only overwrite if source file is newer", "Only overwrite if source file is older", "Yes, always overwrite the duplicate" }, 
-                    Preferences.OverwriteType
+                    (int)Preferences.CopyOption
                     )
                 );
             SettingsMenu.Settings.Add(
@@ -622,12 +659,15 @@ namespace FileFinder
             CoreData.DestinationPath = SettingsMenu.Settings[1].StrValueLabels[1];
             Preferences.FileNameType = SettingsMenu.Settings[3].IntSelection;
             Preferences.SortingEnabled = SettingsMenu.Settings[4].IntSelection == 1;
-            Preferences.OverwriteType = SettingsMenu.Settings[6].IntSelection;
+            Preferences.CopyOption = (FFPreferences.CopyMode)SettingsMenu.Settings[6].IntSelection;
             Preferences.MaxRecursionCount = int.Parse(SettingsMenu.Settings[5].StrValueLabels[SettingsMenu.Settings[5].IntSelection]);
 
             //Save preferences
             SavePreferences(ref InitData);
         }
+        /// <summary>
+        /// This method recursively enumerates all files starting at a directory. It has a recursion limit since there are sometimes symlinks causing an infinite loop.
+        /// </summary>
         public void FindFiles(ref FFInitData InitData)
         {
             //Get a list of all files
@@ -673,9 +713,109 @@ namespace FileFinder
                 return output;
             }
         }
+        /// <summary>
+        /// This method uses the files found to sort them.
+        /// </summary>
         public void CopyFiles(ref FFInitData InitData)
         {
+            List<string> copyHistory = new List<string> { };
+            
+            for (int i = 0; i < CoreData.FilePaths.Count; i++)
+            {
+                Console.WriteLine(BarGraph(i, CoreData.FilePaths.Count, Console.WindowWidth));
+                Console.WriteLine("Copying: {0} out of {1} files copied", i, CoreData.FilePaths.Count);
 
+                //Generate new filenames
+                string newFileName = GenerateFilename(CoreData.FilePaths[i]);
+                string newFolderPath = GenerateFolderPath(CoreData.FilePaths[i]);
+                
+                //To make the code easier to maintain
+                string oldFilepath = CoreData.FilePaths[i];
+                string newFilePath = newFolderPath + newFileName;
+                
+                //Time to copy the files
+                switch (Preferences.CopyOption)
+                {
+                    case FFPreferences.CopyMode.AlwaysKeep:
+                        if (!File.Exists(newFilePath))
+                            //The file at the target destination does not exist, copy the source file
+                            File.Copy(oldFilepath, newFilePath);
+                        break;
+                    
+                    case FFPreferences.CopyMode.OverwriteIfOlder:
+                        if (File.Exists(newFilePath))
+                        {
+                            //If the file exists, check if the source file is newer
+                            if (GetDate(oldFilepath) > GetDate(newFilePath))
+                            {
+                                //Delete the file if it exists
+                                File.Delete(newFilePath);
+                                //Copy the source file
+                                File.Copy(oldFilepath, newFilePath);
+                            }
+                            else
+                            {
+                                //The source file is older, don't do anything
+                                return;
+                            }
+                        }
+                        else
+                        {
+                            //The file at the target destination does not exist, copy the source file
+                            File.Copy(oldFilepath, newFilePath);
+                        }
+                        break;
+                    
+                    case FFPreferences.CopyMode.OverwriteIfNewer:
+                        if (File.Exists(newFilePath))
+                        {
+                            //If the file exists, check if the source file is older
+                            if (GetDate(oldFilepath) < GetDate(newFilePath))
+                            {
+                                //Delete the file if it exists
+                                File.Delete(newFilePath);
+                                //Copy the source file
+                                File.Copy(oldFilepath, newFilePath);
+                            }
+                            else
+                            {
+                                //The source file is older, don't do anything
+                                return;
+                            }
+                        }
+                        else
+                        {
+                            //The file at the target destination does not exist, copy the source file
+                            File.Copy(oldFilepath, newFilePath);
+                        }
+                        break;
+                    
+                    case FFPreferences.CopyMode.AlwaysOverwrite:
+                        if (File.Exists(newFilePath))
+                            //The same file exists at the target directory, delete it
+                            File.Delete(newFilePath);
+                        //Copy the source file
+                        File.Copy(oldFilepath, newFilePath);
+                        break;
+                }
+            }
+
+            DateTime GetDate(string filePath)
+            {
+                return DateTime.UtcNow;
+            }
+            
+            string GenerateFilename(string filePath)
+            {
+                string output = new Random().Next(1111, 9999).ToString();
+                return output;
+            }
+            
+            string GenerateFolderPath(string filePath)
+            {
+                string output = "SampleFolder" + Path.DirectorySeparatorChar;
+                return output;
+            }
         }
         public void FinalizeResults(ref FFInitData InitData)
         {
@@ -692,6 +832,19 @@ namespace FileFinder
                 Logger.LogToFile(2, excep.TargetSite.Name, Logger.UrgencyLevel.Info);
                 Logger.LogToFile(2, excep.StackTrace, Logger.UrgencyLevel.Info);
             }
+        }
+
+        private string BarGraph(int value, int maxValue, int width)
+        {
+            string output = "";
+            string format = System.Environment.OSVersion.Platform == PlatformID.Win32NT ? " █" : " ▏▎▍▌▋▊▉█";
+
+            float ratio = (float)value / (float)maxValue;
+            for (float i = 0; i < width; i++)
+            {
+                output += format[(int)Math.Clamp(((ratio * format.Length) * width) - (i * format.Length), 0, format.Length - 1)];
+            }
+            return output;
         }
     }
 
@@ -765,9 +918,17 @@ namespace FileFinder
         [JsonPropertyName("SortingEnabled")]
         public bool SortingEnabled { get; set; } = true;
         [JsonPropertyName("OverwriteType")]
-        public int OverwriteType { get; set; } = 1;
+        public CopyMode CopyOption { get; set; } = CopyMode.OverwriteIfOlder;
         [JsonPropertyName("MaxRecursionCount")]
         public int MaxRecursionCount { get; set; } = 10;
+
+        public enum CopyMode
+        {
+            AlwaysKeep = 0,
+            OverwriteIfOlder = 1,
+            OverwriteIfNewer = 2,
+            AlwaysOverwrite = 3
+        }
     }
     public class FFCoreData
     {
@@ -788,6 +949,7 @@ namespace FileFinder
     public class FFInitData
     {
         public List<Exception> CaughtExceptions = new List<Exception> { };
+        public string[] ConsoleArgs;
     }
 
     public class ReleaseData
