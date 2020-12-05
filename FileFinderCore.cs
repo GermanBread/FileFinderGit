@@ -23,8 +23,8 @@ namespace FileFinder
     {
         #region Constants
         
-        public static string LOGFILE_BASE_PATH = Directory.GetCurrentDirectory() + Path.DirectorySeparatorChar/* + "FileFinder_Logs" + Path.DirectorySeparatorChar*/;
-        public static string PREFS_FILE_PATH = Directory.GetCurrentDirectory() + Path.DirectorySeparatorChar + "Preferences.json";
+        public static string LOGFILE_BASE_PATH = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + Path.DirectorySeparatorChar + "FileFinderData" + Path.DirectorySeparatorChar /*+ "FileFinder_Logs" + Path.DirectorySeparatorChar*/;
+        public static string PREFS_FILE_PATH = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + Path.DirectorySeparatorChar + "FileFinderData" + Path.DirectorySeparatorChar + "Preferences.json";
         public static string TEMP_DIRECTORY_PATH = Path.TrimEndingDirectorySeparator(Path.GetTempPath());
         public static bool IS_IN_TEMP = Directory.GetCurrentDirectory().Contains(TEMP_DIRECTORY_PATH);
         public static bool IS_UNIX = System.Environment.OSVersion.Platform.Equals(System.PlatformID.Unix);
@@ -43,6 +43,8 @@ namespace FileFinder
         public static FFInitData Init(ref string[] args)
         {
             //Create log files
+            if (!Directory.Exists(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + Path.DirectorySeparatorChar + "FileFinderData"))
+                Directory.CreateDirectory(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + Path.DirectorySeparatorChar + "FileFinderData");
             Logger.CreateLog(0, LOGFILE_BASE_PATH + "Init.log");
             Logger.CreateLog(1, LOGFILE_BASE_PATH + "Updater.log");
             Logger.CreateLog(2, LOGFILE_BASE_PATH + "Runtime.log");
@@ -62,13 +64,12 @@ namespace FileFinder
                 if (IS_IN_TEMP)
                 {
                     FFUpdater.UpdateApp(ref InitData);
-                    throw new QuitRequestedException();
                 }
                 
                 //Check for updates and install
                 FFUpdater.DeleteTemp(ref InitData);
                 FFUpdater.FetchUpdates(ref InitData);
-                FFUpdater.CompareUpdates(ref InitData);
+                FFUpdater.UpdaterData.UpdateLevel = FFUpdater.CompareUpdates(APP_VERSION, FFUpdater.UpdaterData.Releases[0].ReleaseTag);
                 if (FFUpdater.UpdaterData.UpdateLevel > 0 || args.Contains("-u"))
                 {
                     FFUpdater.ShowUpdateMenu(ref InitData);
@@ -157,7 +158,7 @@ namespace FileFinder
                 Logger.LogToFile(1, "Temp directory could not be deleted", Logger.UrgencyLevel.Critical);
                 Logger.LogToFile(1, "Exception: " + caughtException.Message, Logger.UrgencyLevel.Info);
                 Console.WriteLine($"Temp directory could not be deleted. Delete \"{FileFinder.TEMP_DIRECTORY_PATH + Path.DirectorySeparatorChar}FileFinderUpdater\" and try again. Check logs for more info.");
-                throw new QuitRequestedException("Temp deletion method");
+                throw;
             }
         }
         /// <summary>
@@ -249,12 +250,12 @@ namespace FileFinder
             Logger.LogToFile(1, "Duplicating updater", Logger.UrgencyLevel.Info);
             File.Copy(UpdaterData.UpdaterPath + Path.DirectorySeparatorChar + UpdaterData.UpdaterFileName, UpdaterData.UpdaterPath + Path.DirectorySeparatorChar + FileFinder.APP_NAME + FileFinder.APP_EXTENSION);
 
-            StartUpdater(ref InitData);
+            StartUpdater();
         }
         /// <summary>
         /// This method starts the updater, which will be responsible for replacing the main executable
         /// </summary>
-        public void StartUpdater(ref FFInitData InitData)
+        public void StartUpdater()
         {
             Console.WriteLine("Starting updater: " + UpdaterData.UpdaterPath + Path.DirectorySeparatorChar + UpdaterData.UpdaterFileName);
             Console.ResetColor();
@@ -263,9 +264,9 @@ namespace FileFinder
             ProcessStartInfo startInfo = new ProcessStartInfo();
             startInfo.FileName = UpdaterData.UpdaterPath + Path.DirectorySeparatorChar + UpdaterData.UpdaterFileName;
             //This is scuffed, but it'll do
-            if (UpdaterData.UpdateLevel >= 0)
+            if (CompareUpdates(FileFinder.APP_VERSION, "v2.1.0") >= 0)
                 //New update method
-                startInfo.Arguments = Directory.GetCurrentDirectory().Replace(" ", "─") + FileFinder.APP_NAME + FileFinder.APP_EXTENSION;
+                startInfo.Arguments = Directory.GetCurrentDirectory() + FileFinder.APP_NAME + FileFinder.APP_EXTENSION;
             else
                 //For legacy reasons, will be stripped out sooner or later
                 startInfo.Arguments = Directory.GetCurrentDirectory().Replace(" ", "─");
@@ -274,17 +275,15 @@ namespace FileFinder
             Logger.LogToFile(1, "Starting updater", Logger.UrgencyLevel.Info);
             Process.Start(startInfo);
             
-            throw new QuitRequestedException();
+            throw new QuitRequestedException("Updater started");
         }
         /// <summary>
         /// This method compares app versions with eachanother
         /// </summary>
         /// <param name="initData"></param>
-        public void CompareUpdates(ref FFInitData InitData)
+        public int CompareUpdates(string currentVersion, string newVersion)
         {
             ReleaseData cutReleaseData = UpdaterData.Releases[UpdaterData.SelectedRelease];
-            string currentVersion = FileFinder.APP_VERSION;
-            string newVersion = cutReleaseData.ReleaseTag;
             
             char[] validVersionChars = new char[] { '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '.'};
             char[] validIntChars = new char[] { '1', '2', '3', '4', '5', '6', '7', '8', '9', '0'};
@@ -315,26 +314,26 @@ namespace FileFinder
             //compare major
             if (firstSplit[0] < secondSplit[0])
             {
-                UpdaterData.UpdateLevel = 3;
+                return 3;
             }
             //compare minor
             else if (firstSplit[0] == secondSplit[0] && firstSplit[1] < secondSplit[1])
             {
-                UpdaterData.UpdateLevel = 2;
+                return 2;
             }
             //compare patch
             else if (firstSplit[0] == secondSplit[0] && firstSplit[1] == secondSplit[1] && firstSplit[2] < secondSplit[2])
             {
-                UpdaterData.UpdateLevel = 1;
+                return 1;
             }
             //check if they are equal
             else if (firstSplit[0] == secondSplit[0] && firstSplit[1] == secondSplit[1] && firstSplit[2] == secondSplit[2])
             {
-                UpdaterData.UpdateLevel = 0;
+                return 0;
             }
             else
             {
-                UpdaterData.UpdateLevel = -1;
+                return -1;
             }
         }
         /// <summary>
@@ -451,7 +450,7 @@ namespace FileFinder
         {
             string AppPath = InitData.ConsoleArgs[0].Replace("─", " ");
             
-            //Since my older build don't pass the executable's name alongside the path
+            //Since my older builds don't pass the executable's name alongside the path
             if (!File.Exists(InitData.ConsoleArgs[0]))
                 //The executable's name will be hard coded to ensure backwards-compatibility
                 AppPath = InitData.ConsoleArgs[0].Replace("─", " ") + "FileFinder" + FileFinder.APP_EXTENSION;
@@ -462,7 +461,7 @@ namespace FileFinder
             Logger.LogToFile(1, "Copied new executable", Logger.UrgencyLevel.Info);
             Console.WriteLine("Update to version {0} completed sucessfully", FileFinder.APP_VERSION);
 
-            throw new QuitRequestedException("Update completed");
+            throw new QuitRequestedException("Update complete");
         }
 
         /// <summary>
@@ -620,6 +619,15 @@ namespace FileFinder
                     IntSelection = Math.Clamp(Preferences.MaxRecursionCount, 0, 100),
                     StrDescription = "How deep down should files be searched?"
                 });
+            /*SettingsMenu.Settings.Add(
+                new SettingsEntry(
+                    "Allow unsafe paths?", 
+                    SettingsEntry.InteractionType.selectableAndInteractable, 
+                    new List<string> { "No", "Yes" }, 
+                    Preferences.AllowUnsafePaths ? 1 : 0,
+                    "A path is considered unsafe when the app does not have write permissions to said path"
+                    )
+                );*/
             SettingsMenu.Settings.Add(
                 new SettingsEntry(
                     "Should duplicates be overwritten?", 
@@ -659,8 +667,9 @@ namespace FileFinder
             CoreData.DestinationPath = SettingsMenu.Settings[1].StrValueLabels[1];
             Preferences.FileNameType = SettingsMenu.Settings[3].IntSelection;
             Preferences.SortingEnabled = SettingsMenu.Settings[4].IntSelection == 1;
-            Preferences.CopyOption = (FFPreferences.CopyMode)SettingsMenu.Settings[6].IntSelection;
             Preferences.MaxRecursionCount = int.Parse(SettingsMenu.Settings[5].StrValueLabels[SettingsMenu.Settings[5].IntSelection]);
+            //Preferences.AllowUnsafePaths = SettingsMenu.Settings[6].IntSelection == 1;
+            Preferences.CopyOption = (FFPreferences.CopyMode)SettingsMenu.Settings[6].IntSelection;
 
             //Save preferences
             SavePreferences(ref InitData);
@@ -670,16 +679,51 @@ namespace FileFinder
         /// </summary>
         public void FindFiles(ref FFInitData InitData)
         {
+            //Clear the console and notify the user
+            Console.Clear();
+            Console.WriteLine("Searching for files in {0}. This will take a while", CoreData.SourcePath);
+            
             //Get a list of all files
-            CoreData.FilePaths = TryGetAllDirectories(CoreData.SourcePath, 0);
+            List<string> UnfilteredFilePaths = TryGetAllDirectories(CoreData.SourcePath, 0);
+            
+            //Before continuing, remove every path that the user doesn't have permissions to
+            for (int i = 0; i < UnfilteredFilePaths.Count; i++)
+            {
+                Console.Clear();
+                Console.WriteLine("Retrieving files [{0} out of {1} directories processed]", i, UnfilteredFilePaths.Count - 1);
+                Console.WriteLine(BarGraph(i, UnfilteredFilePaths.Count - 1, Console.WindowWidth));
+                
+                try
+                {
+                    foreach (string file in Directory.GetFiles(UnfilteredFilePaths[i], "*", SearchOption.TopDirectoryOnly).Where(
+                        a => a.EndsWith(".mp4")
+                         || a.EndsWith(".mov")
+                          || a.EndsWith(".png")
+                           || a.EndsWith(".jpg")
+                            || a.EndsWith(".jpeg")
+                             || a.EndsWith(".img")
+                              || a.EndsWith(".avi")
+                               || a.EndsWith(".webm")))
+                    {
+                        CoreData.FilePaths.Add(file);
+                    }
+                }
+                catch { }
+            }
+            
             Logger.LogToFile(2, $"{CoreData.FilePaths.Count} media file(s) were found", Logger.UrgencyLevel.Info);
             foreach (var item in CoreData.FilePaths)
             {
-                Logger.LogToFile(1, $"Found file \"{item}\"", Logger.UrgencyLevel.Info);
+                Logger.LogToFile(2, $"Found file \"{item}\"", Logger.UrgencyLevel.Info);
             }
 
             List<string> TryGetAllDirectories(string path, int recursionLevel)
             {
+                //Check if the path provided is in the blacklist
+                //foreach (string blackListedPathWord in CoreData.PathBlacklist)
+                    //if (path.Contains(blackListedPathWord))
+                        //return new List<string> { };
+                
                 //Create a empty list
                 List<string> newdirs = new List<string> { };
                 List<string> output = new List<string> { };
@@ -722,81 +766,95 @@ namespace FileFinder
             
             for (int i = 0; i < CoreData.FilePaths.Count; i++)
             {
-                Console.WriteLine(BarGraph(i, CoreData.FilePaths.Count, Console.WindowWidth));
-                Console.WriteLine("Copying: {0} out of {1} files copied", i, CoreData.FilePaths.Count);
+                Console.Clear();
+                Console.WriteLine("Copying [{0} out of {1} files copied]", i, CoreData.FilePaths.Count - 1);
+                Console.WriteLine(BarGraph(i, CoreData.FilePaths.Count - 1, Console.WindowWidth));
 
                 //Generate new filenames
                 string newFileName = GenerateFilename(CoreData.FilePaths[i]);
-                string newFolderPath = GenerateFolderPath(CoreData.FilePaths[i]);
+                string newDirectoryPath = GenerateFolderPath(CoreData.FilePaths[i]);
                 
                 //To make the code easier to maintain
-                string oldFilepath = CoreData.FilePaths[i];
-                string newFilePath = newFolderPath + newFileName;
+                string oldFilePath = CoreData.FilePaths[i];
+                string newFilePath = newDirectoryPath + Path.DirectorySeparatorChar + newFileName;
                 
-                //Time to copy the files
-                switch (Preferences.CopyOption)
+                //Create the target directory if it doesn't exist
+                if (!Directory.Exists(newDirectoryPath))
+                    Directory.CreateDirectory(newDirectoryPath);
+                
+                try
                 {
-                    case FFPreferences.CopyMode.AlwaysKeep:
-                        if (!File.Exists(newFilePath))
+                    //Time to copy the files
+                    switch (Preferences.CopyOption)
+                    {
+                        case FFPreferences.CopyMode.AlwaysKeep:
                             //The file at the target destination does not exist, copy the source file
-                            File.Copy(oldFilepath, newFilePath);
-                        break;
-                    
-                    case FFPreferences.CopyMode.OverwriteIfOlder:
-                        if (File.Exists(newFilePath))
-                        {
-                            //If the file exists, check if the source file is newer
-                            if (GetDate(oldFilepath) > GetDate(newFilePath))
+                            if (!File.Exists(newFilePath))
+                                File.Copy(oldFilePath, newFilePath);
+                            break;
+                        
+                        case FFPreferences.CopyMode.OverwriteIfOlder:
+                            if (File.Exists(newFilePath))
                             {
-                                //Delete the file if it exists
-                                File.Delete(newFilePath);
-                                //Copy the source file
-                                File.Copy(oldFilepath, newFilePath);
+                                //If the file exists, check if the source file is newer
+                                if (GetDate(oldFilePath) > GetDate(newFilePath))
+                                {
+                                    //Delete the file if it exists
+                                    File.Delete(newFilePath);
+                                    //Copy the source file
+                                    File.Copy(oldFilePath, newFilePath);
+                                }
+                                else
+                                {
+                                    //The source file is older, don't do anything
+                                    return;
+                                }
                             }
                             else
                             {
-                                //The source file is older, don't do anything
-                                return;
+                                //The file at the target destination does not exist, copy the source file
+                                File.Copy(oldFilePath, newFilePath);
                             }
-                        }
-                        else
-                        {
-                            //The file at the target destination does not exist, copy the source file
-                            File.Copy(oldFilepath, newFilePath);
-                        }
-                        break;
-                    
-                    case FFPreferences.CopyMode.OverwriteIfNewer:
-                        if (File.Exists(newFilePath))
-                        {
-                            //If the file exists, check if the source file is older
-                            if (GetDate(oldFilepath) < GetDate(newFilePath))
+                            break;
+                        
+                        case FFPreferences.CopyMode.OverwriteIfNewer:
+                            if (File.Exists(newFilePath))
                             {
-                                //Delete the file if it exists
-                                File.Delete(newFilePath);
-                                //Copy the source file
-                                File.Copy(oldFilepath, newFilePath);
+                                //If the file exists, check if the source file is older
+                                if (GetDate(oldFilePath) < GetDate(newFilePath))
+                                {
+                                    //Delete the file if it exists
+                                    File.Delete(newFilePath);
+                                    //Copy the source file
+                                    File.Copy(oldFilePath, newFilePath);
+                                }
+                                else
+                                {
+                                    //The source file is older, don't do anything
+                                    return;
+                                }
                             }
                             else
                             {
-                                //The source file is older, don't do anything
-                                return;
+                                //The file at the target destination does not exist, copy the source file
+                                File.Copy(oldFilePath, newFilePath);
                             }
-                        }
-                        else
-                        {
-                            //The file at the target destination does not exist, copy the source file
-                            File.Copy(oldFilepath, newFilePath);
-                        }
-                        break;
-                    
-                    case FFPreferences.CopyMode.AlwaysOverwrite:
-                        if (File.Exists(newFilePath))
+                            break;
+                        
+                        case FFPreferences.CopyMode.AlwaysOverwrite:
                             //The same file exists at the target directory, delete it
-                            File.Delete(newFilePath);
-                        //Copy the source file
-                        File.Copy(oldFilepath, newFilePath);
-                        break;
+                            if (File.Exists(newFilePath))
+                                File.Delete(newFilePath);
+                            //Copy the source file
+                            File.Copy(oldFilePath, newFilePath);
+                            break;
+                    }
+                    Logger.LogToFile(2, $"Copied {oldFilePath} to {newFilePath}", Logger.UrgencyLevel.Info);
+                }
+                catch (Exception excep)
+                {
+                    InitData.CaughtExceptions.Add(excep);
+                    Logger.LogToFile(2, $"File {oldFilePath} caused an error", Logger.UrgencyLevel.Warn);
                 }
             }
 
@@ -807,19 +865,22 @@ namespace FileFinder
             
             string GenerateFilename(string filePath)
             {
-                string output = new Random().Next(1111, 9999).ToString();
+                string output = Path.GetFileName(filePath);
                 return output;
             }
             
             string GenerateFolderPath(string filePath)
             {
-                string output = "SampleFolder" + Path.DirectorySeparatorChar;
+                string output = "SampleFolder";
                 return output;
             }
         }
         public void FinalizeResults(ref FFInitData InitData)
         {
-            Logger.LogToFile(2, $"Found {CoreData.FilePaths.Count} files, out of which {Math.Round((CoreData.UnsortedCount / CoreData.FilePaths.Count) * 10d) / 10d}% were sorted using the fallback method", Logger.UrgencyLevel.Info);
+            try
+            {
+                Logger.LogToFile(2, $"Found {CoreData.FilePaths.Count} files, out of which {Math.Round((CoreData.UnsortedCount / CoreData.FilePaths.Count) * 10d) / 10d}% were sorted using the fallback method", Logger.UrgencyLevel.Info);
+            } catch { }
             if (InitData.CaughtExceptions.Count == 0)
                 return;
             if (InitData.CaughtExceptions.Count == 1)
@@ -828,19 +889,19 @@ namespace FileFinder
                 Logger.LogToFile(2, $"The following {InitData.CaughtExceptions.Count} Exceptions were caught: ", Logger.UrgencyLevel.Info);
             foreach (var excep in InitData.CaughtExceptions)
             {
-                Logger.LogToFile(2, excep.Message, Logger.UrgencyLevel.Info);
-                Logger.LogToFile(2, excep.TargetSite.Name, Logger.UrgencyLevel.Info);
-                Logger.LogToFile(2, excep.StackTrace, Logger.UrgencyLevel.Info);
+                //Should be good enough
+                Logger.LogToFile(2, excep.ToString(), Logger.UrgencyLevel.Info);
             }
+            Console.WriteLine("All operations completed successfully. Check the log files if needed");
         }
 
         private string BarGraph(int value, int maxValue, int width)
         {
             string output = "";
-            string format = System.Environment.OSVersion.Platform == PlatformID.Win32NT ? " █" : " ▏▎▍▌▋▊▉█";
+            string format = System.Environment.OSVersion.Platform == PlatformID.Win32NT ? "█" : "▏▎▍▌▋▊▉█";
 
             float ratio = (float)value / (float)maxValue;
-            for (float i = 0; i < width; i++)
+            for (float i = 0; i < width * ratio; i++)
             {
                 output += format[(int)Math.Clamp(((ratio * format.Length) * width) - (i * format.Length), 0, format.Length - 1)];
             }
@@ -920,7 +981,9 @@ namespace FileFinder
         [JsonPropertyName("OverwriteType")]
         public CopyMode CopyOption { get; set; } = CopyMode.OverwriteIfOlder;
         [JsonPropertyName("MaxRecursionCount")]
-        public int MaxRecursionCount { get; set; } = 10;
+        public int MaxRecursionCount { get; set; } = 5;
+        [JsonPropertyName("UnsafePaths")]
+        public bool AllowUnsafePaths { get; set; } = false;
 
         public enum CopyMode
         {
@@ -936,6 +999,7 @@ namespace FileFinder
         public int UnsortedCount = 0;
         public string SourcePath = "";
         public string DestinationPath = "";
+        public List<string> PathBlacklist = new List<string> { "dosdevices" };
     }
     public class FFUpdaterData
     {
