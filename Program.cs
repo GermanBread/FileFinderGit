@@ -36,9 +36,7 @@ namespace FileFinder
             //Call Init();
             FileFinder.Init(ref args);
 
-            //Code after this is obsolete
-            return;
-
+            /* legacy code
             #region Program Setup
                 
                 #region Variables
@@ -736,7 +734,11 @@ namespace FileFinder
             Console.CursorVisible = true;
 
             #endregion
+
+            */
         }
+
+        /*
         
         #region Classes
         
@@ -1071,5 +1073,8 @@ namespace FileFinder
         }
 
         #endregion
+
+        */
+
     }
 }
