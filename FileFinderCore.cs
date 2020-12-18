@@ -466,7 +466,7 @@ namespace FileFinder
 
             File.Delete(AppPath);
             Logger.LogToFile(1, "Deleted executable", Logger.UrgencyLevel.Info);
-            File.Copy(UpdaterData.UpdaterPath + FileFinder.APP_NAME + FileFinder.APP_EXTENSION, AppPath);
+            File.Copy(UpdaterData.UpdaterPath + Path.DirectorySeparatorChar + FileFinder.APP_NAME + FileFinder.APP_EXTENSION, AppPath);
             Logger.LogToFile(1, "Copied new executable", Logger.UrgencyLevel.Info);
             Console.WriteLine("Update to version {0} completed sucessfully", FileFinder.APP_VERSION);
 
