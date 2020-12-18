@@ -329,7 +329,7 @@ namespace UserInterface
                 }
                 Console.WriteLine();
 
-                //list all the drives
+                //list all the paths
                 for (int i = 0; i < paths.Count; i++)
                 {                   
                     if (i < selection - 2)

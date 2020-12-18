@@ -34,7 +34,7 @@ namespace FileFinder
             #endregion
             
             //Cancel key handler
-            Console.CancelKeyPress += new ConsoleCancelEventHandler(appCancel);
+            Console.CancelKeyPress += new ConsoleCancelEventHandler(AppCancel);
 
             #if DEBUG
             Console.WriteLine("The app is being run in debug, updating is disabled");
@@ -42,11 +42,10 @@ namespace FileFinder
             
             //Call Init();
             try {
-            FileFinder.Init(ref args);
+                FileFinder.Init(ref args);
             }
             catch (Exception excep) {
                 //This could run if the error occurs inside the Init() method itself and outside the catch clause. If that happens, PANIC
-                //I want to make it a bit more dramatic :)
                 Console.Write($"---[ PANIC, INIT DIED\n");
                 Console.WriteLine($"LOCAL: {DateTime.Now}");
                 Console.WriteLine($"UTC: {DateTime.UtcNow}");
@@ -59,9 +58,36 @@ namespace FileFinder
                 Console.Write($"END PANIC, APP EXIT ]---\n");
             }
 
-            /* legacy code
+            static void AppCancel(object sender, ConsoleCancelEventArgs cancelEvents)
+            {
+                Console.CursorVisible = true;
+                Console.Clear();
+                Console.ForegroundColor = ConsoleColor.DarkGray;
+                Console.WriteLine("Writing to log");
+                foreach (var logFile in Logger.LogFiles)
+                {
+                    try
+                    {
+                        Logger.LogToFile(logFile.Key, $"{cancelEvents.SpecialKey} was recieved", Logger.UrgencyLevel.Info);
+                        Logger.SaveLog(logFile.Key);    
+                    }
+                    catch (NullReferenceException)
+                    {
+                    }
+                    catch (Exception excep)
+                    {
+                        Console.WriteLine("Unknown error while writing");
+                        Console.WriteLine(excep.Message);
+                    }
+                }
+                Console.ResetColor();
+                Console.WriteLine("Programm exit");
+                return;
+            }
+
+            /*
             #region Program Setup
-                
+
                 #region Variables
                 
                 //Variables that don't depend on the settings manager
@@ -757,12 +783,10 @@ namespace FileFinder
             Console.CursorVisible = true;
 
             #endregion
-
             */
         }
 
         /*
-        
         #region Classes
         
         public class ReleaseData
@@ -845,7 +869,7 @@ namespace FileFinder
         
         #region Program Methods
         
-        */static void appCancel(object sender, ConsoleCancelEventArgs cancelEvents)
+        static void appCancel(object sender, ConsoleCancelEventArgs cancelEvents)
         {
             Console.CursorVisible = true;
             Console.Clear();
@@ -855,7 +879,7 @@ namespace FileFinder
             {
                 try
                 {
-                    Logger.LogToFile(logFile.Key, $"{cancelEvents.SpecialKey} was recieved", Logger.UrgencyLevel.Info);
+                    Logger.LogToFile($"{cancelEvents.SpecialKey} was recieved", logFile.Key, Logger.UrgencyLevel.Info);
                     Logger.SaveLog(logFile.Key);    
                 }
                 catch (NullReferenceException)
@@ -870,7 +894,7 @@ namespace FileFinder
             Console.ResetColor();
             Console.WriteLine("Programm exit");
             return;
-        }/*
+        }
         
         static List<ReleaseData> GetReleases(string url)
         {
@@ -1096,7 +1120,6 @@ namespace FileFinder
         }
 
         #endregion
-
         */
     }
 }

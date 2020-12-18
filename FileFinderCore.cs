@@ -3,9 +3,7 @@ using System;
 using System.IO;
 using System.Net;
 using System.Linq;
-using System.Threading;
 using System.Text.Json;
-using System.Reflection;
 using System.Diagnostics;
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
@@ -92,6 +90,7 @@ namespace FileFinder
                 if (FFMain.CoreData.FilePaths.Count > 0)
                     FFMain.CopyFiles(ref InitData);
                 FFMain.FinalizeResults(ref InitData);
+                Console.WriteLine("All operations completed successfully. Check the log files if needed");
             }
             catch (QuitRequestedException excep)
             {
@@ -694,7 +693,7 @@ namespace FileFinder
             Console.WriteLine("Searching for files in {0}. This will take a while", CoreData.SourcePath);
             
             //Get a list of all files
-            List<string> UnfilteredFilePaths = TryGetAllDirectories(CoreData.SourcePath, 0);
+            List<string> UnfilteredFilePaths = GetAllDirectories(CoreData.SourcePath, 0);
             
             //Before continuing, remove every path that the user doesn't have permissions to
             for (int i = 0; i < UnfilteredFilePaths.Count; i++)
@@ -727,7 +726,7 @@ namespace FileFinder
                 Logger.LogToFile(2, $"Found file \"{item}\"", Logger.UrgencyLevel.Info);
             }
 
-            List<string> TryGetAllDirectories(string path, int recursionLevel)
+            List<string> GetAllDirectories(string path, int recursionLevel)
             {
                 //Check if the path provided is in the blacklist
                 //foreach (string blackListedPathWord in CoreData.PathBlacklist)
@@ -760,7 +759,7 @@ namespace FileFinder
                 //Call this function recursively with each having a unique path
                 newdirs.ForEach(
                     subdir => { 
-                        output.AddRange(TryGetAllDirectories(subdir, recursionLevel + 1));
+                        output.AddRange(GetAllDirectories(subdir, recursionLevel + 1));
                     }
                 );
                 output.AddRange(newdirs);
@@ -772,25 +771,29 @@ namespace FileFinder
         /// </summary>
         public void CopyFiles(ref FFInitData InitData)
         {
-            List<string> copyHistory = new List<string> { };
+            Console.Clear();
+            
+            List<string> Log = new List<string> { };
             
             for (int i = 0; i < CoreData.FilePaths.Count; i++)
             {
-                Console.Clear();
+                Console.SetCursorPosition(0, 0);
                 Console.WriteLine("Copying [{0} out of {1} files copied]", i, CoreData.FilePaths.Count - 1);
                 Console.WriteLine(BarGraph(i, CoreData.FilePaths.Count - 1, Console.WindowWidth));
 
                 //Generate new filenames
-                string newFileName = GenerateFilename(CoreData.FilePaths[i]);
-                string newDirectoryPath = GenerateFolderPath(CoreData.FilePaths[i]);
+                string newFileName = GenerateFileName(CoreData.FilePaths[i], i, ref InitData);
+                string newDirectoryPath = GenerateDirectoryName(CoreData.FilePaths[i], ref InitData);
                 
                 //To make the code easier to maintain
                 string oldFilePath = CoreData.FilePaths[i];
                 string newFilePath = newDirectoryPath + Path.DirectorySeparatorChar + newFileName;
                 
                 //Create the target directory if it doesn't exist
-                if (!Directory.Exists(newDirectoryPath))
+                if (!Directory.Exists(newDirectoryPath)) {
                     Directory.CreateDirectory(newDirectoryPath);
+                    Log.Insert(0, "Created a new directory");
+                }
                 
                 try
                 {
@@ -799,88 +802,99 @@ namespace FileFinder
                     {
                         case FFPreferences.CopyMode.AlwaysKeep:
                             //The file at the target destination does not exist, copy the source file
-                            if (!File.Exists(newFilePath))
+                            if (!File.Exists(newFilePath)) {
                                 File.Copy(oldFilePath, newFilePath);
+                                Log.Insert(0, $"$Copied {oldFilePath} to {newFilePath}");
+                            }
                             break;
                         
                         case FFPreferences.CopyMode.OverwriteIfOlder:
-                            if (File.Exists(newFilePath))
-                            {
-                                //If the file exists, check if the source file is newer
-                                if (GetDate(oldFilePath, ref InitData) > GetDate(newFilePath, ref InitData))
-                                {
-                                    //Delete the file if it exists
-                                    File.Delete(newFilePath);
-                                    //Copy the source file
-                                    File.Copy(oldFilePath, newFilePath);
-                                }
-                                else
-                                {
-                                    //The source file is older, don't do anything
-                                    return;
-                                }
+                            if (File.Exists(newFilePath) && GetDate(oldFilePath, ref InitData) > GetDate(newFilePath, ref InitData)) {
+                                //Delete the file if it exists
+                                File.Delete(newFilePath);
+                                //Copy the source file
+                                File.Copy(oldFilePath, newFilePath);
+                                Log.Insert(0, $"$Replaced {newFilePath}");
                             }
-                            else
-                            {
+                            else {
                                 //The file at the target destination does not exist, copy the source file
                                 File.Copy(oldFilePath, newFilePath);
+                                Log.Insert(0, $"$Copied {oldFilePath} to {newFilePath}");
                             }
                             break;
                         
                         case FFPreferences.CopyMode.OverwriteIfNewer:
-                            if (File.Exists(newFilePath))
-                            {
-                                //If the file exists, check if the source file is older
-                                if (GetDate(oldFilePath, ref InitData) < GetDate(newFilePath, ref InitData))
-                                {
-                                    //Delete the file if it exists
-                                    File.Delete(newFilePath);
-                                    //Copy the source file
-                                    File.Copy(oldFilePath, newFilePath);
-                                }
-                                else
-                                {
-                                    //The source file is older, don't do anything
-                                    return;
-                                }
+                            if (File.Exists(newFilePath) && GetDate(oldFilePath, ref InitData) < GetDate(newFilePath, ref InitData)) {
+                                //Delete the file if it exists
+                                File.Delete(newFilePath);
+                                //Copy the source file
+                                File.Copy(oldFilePath, newFilePath);
+                                Log.Insert(0, $"$Replaced {newFilePath}");
                             }
-                            else
-                            {
+                            else {
                                 //The file at the target destination does not exist, copy the source file
                                 File.Copy(oldFilePath, newFilePath);
+                                Log.Insert(0, $"$Copied {oldFilePath} to {newFilePath}");
                             }
                             break;
                         
                         case FFPreferences.CopyMode.AlwaysOverwrite:
                             //The same file exists at the target directory, delete it
-                            if (File.Exists(newFilePath))
+                            if (File.Exists(newFilePath)) {
                                 File.Delete(newFilePath);
-                            //Copy the source file
-                            File.Copy(oldFilePath, newFilePath);
+                                //Copy the source file
+                                File.Copy(oldFilePath, newFilePath);
+                                Log.Insert(0, $"$Replaced {newFilePath}");
+                            }
+                            else {
+                                //Copy the source file
+                                File.Copy(oldFilePath, newFilePath);
+                                Log.Insert(0, $"$Copied {oldFilePath} to {newFilePath}");
+                            }
                             break;
                     }
-                    Logger.LogToFile(2, $"Copied {oldFilePath} to {newFilePath}", Logger.UrgencyLevel.Info);
+                    Logger.LogToFile(2, $"$Copied {oldFilePath} to {newFilePath}", Logger.UrgencyLevel.Info);
                 }
                 catch (Exception excep)
                 {
                     InitData.CaughtExceptions.Add(excep);
                     Logger.LogToFile(2, $"File {oldFilePath} caused an error", Logger.UrgencyLevel.Warn);
+                    Log.Insert(0, $"&File {oldFilePath} caused an error");
                 }
+                
+                //Just to show the user what the app is currently doing
+                Console.SetCursorPosition(0, 4);
+                Console.WriteLine("Log");
+                while (Log.Count > Console.WindowHeight / 2)
+                    Log.RemoveAt(Log.Count - 1);
+                for (int l = 0; l < Log.Count; l++) {
+                    Console.SetCursorPosition(0, 5 + l);
+                    Console.ForegroundColor = Log[l].StartsWith("%") ? ConsoleColor.Yellow : ConsoleColor.Blue;
+                    Console.WriteLine(new string(Log[l].Skip(1).Take(Console.WindowWidth).ToArray()));
+                    Console.ResetColor();
+                }
+                //Write a really long string
+                Console.WriteLine("                                                                                                                                                                                                     ");
             }
 
+            /// <summary>
+            /// This method uses the MetadataExtractor librairy to extract the date from the media files
+            /// </summary>
+            /// <param name="filePath">The file whose metadata should be extracted</param>
+            /// <returns>A point in time that can be used</returns>
             DateTime GetDate(string filePath, ref FFInitData InitData)
             {
                 string FileDate;
                 try
                 {
-                    IEnumerable<MetadataExtractor.Directory> fileMetadata = MetadataExtractor.ImageMetadataReader.ReadMetadata(filePath);
-                    ExifSubIfdDirectory exifMetadata = fileMetadata?.OfType<ExifSubIfdDirectory>().FirstOrDefault();
-                    XmpDirectory xmpMetadata = fileMetadata?.OfType<XmpDirectory>().FirstOrDefault();
+                    IEnumerable<MetadataExtractor.Directory> FileMetadata = MetadataExtractor.ImageMetadataReader.ReadMetadata(filePath);
+                    ExifSubIfdDirectory ExifMetadata = FileMetadata?.OfType<ExifSubIfdDirectory>().FirstOrDefault();
+                    XmpDirectory XmpMetadata = FileMetadata?.OfType<XmpDirectory>().FirstOrDefault();
                     
-                    FileDate = exifMetadata?.GetDescription(ExifDirectoryBase.TagDateTimeOriginal);
+                    FileDate = ExifMetadata?.GetDescription(ExifDirectoryBase.TagDateTimeOriginal);
                     if (FileDate == null)
                     {
-                        xmpMetadata?.GetXmpProperties().TryGetValue("MetadataDate", out FileDate);
+                        XmpMetadata?.GetXmpProperties().TryGetValue("MetadataDate", out FileDate);
                         if (FileDate == null)
                         {
                             //If all of the above fail, use the last write time as a reference
@@ -897,19 +911,57 @@ namespace FileFinder
                     CoreData.UnsortedCount++;
                     InitData.CaughtExceptions.Add(caughtException);
                 }
-                DateTime.TryParse(FileDate, out DateTime Result);
+                DateTime Result;
+                try {
+                    //Try parsing the date
+                    Result = DateTime.ParseExact(FileDate, "dd/MM/yyyy HH:mm:ss", null);
+                }
+                catch (FormatException) {
+                    //That one failed, try again with a different format
+                    Result = DateTime.ParseExact(FileDate, "yyyy:MM:dd HH:mm:ss", null);
+                }
+                catch (Exception excep) {
+                    //This should never execute
+                    Result = DateTime.Now;
+                    Console.WriteLine($"Failed to parse date of {filePath}!");
+                    Console.WriteLine(excep);
+                    Console.WriteLine($"Press enter to continue");
+                    InitData.CaughtExceptions.Add(excep);
+                    CoreData.UnsortedCount++;
+                    Console.ReadLine();
+                }
                 return Result;
             }
             
-            string GenerateFilename(string filePath)
-            {
-                string output = Path.GetFileName(filePath);
+            /// <summary>
+            /// This method uses the "GetDate" method to create a new filename
+            /// </summary>
+            /// <param name="filePath">The file to use</param>
+            /// <param name="iteratorValue">The current iterator's value</param>
+            /// <returns></returns>
+            string GenerateFileName(string filePath, int iteratorValue, ref FFInitData InitData) {
+                DateTime FileDate = GetDate(filePath, ref InitData);
+                string output;
+                output = Path.GetFileNameWithoutExtension(filePath);
+                if (Preferences.FileNameType == 1)
+                    output += "_" + FileDate.Day + "+" + FileDate.Month + "+" + FileDate.Year;
+                else if (Preferences.FileNameType == 2)
+                    output += "_" + FileDate.Day + "+" + FileDate.Month + "+" + FileDate.Year + "_" + iteratorValue;
+                output += Path.GetExtension(filePath);
                 return output;
             }
-            
-            string GenerateFolderPath(string filePath)
+            /// <summary>
+            /// This method uses the "GetDate" method to create a new directoryname
+            /// </summary>
+            /// <param name="filePath">The file to use</param>
+            /// <param name="iteratorValue">The current iterator's value</param>
+            /// <returns></returns>
+            string GenerateDirectoryName(string filePath, ref FFInitData InitData)
             {
-                string output = "SampleFolder";
+                DateTime FileDate = GetDate(filePath, ref InitData);
+                string output = $"{CoreData.DestinationPath}";
+                if (Preferences.SortingEnabled)
+                    output += $"{Path.DirectorySeparatorChar}{FileDate.Year}_{FileDate.Month}_{FileDate.Day}";
                 return output;
             }
         }
@@ -930,7 +982,6 @@ namespace FileFinder
                 //Should be good enough
                 Logger.LogToFile(2, excep.ToString(), Logger.UrgencyLevel.Info);
             }
-            Console.WriteLine("All operations completed successfully. Check the log files if needed");
         }
 
         private string BarGraph(int value, int maxValue, int width)
