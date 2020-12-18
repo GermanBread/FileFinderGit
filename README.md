@@ -1,5 +1,3 @@
-[![CodeFactor](https://www.codefactor.io/repository/github/germanbread/filefindergit/badge/master)](https://www.codefactor.io/repository/github/germanbread/filefindergit/overview/master)
-<br>
 ![Last commit](https://img.shields.io/github/last-commit/GermanBread/FileFinderGit)
 
 # File Finder
@@ -7,7 +5,7 @@
 A project intended to make it easy to find files scattered across drives.
 This project contains a `UserInterface.cs` file which has been written with other projects in mind.
 
-Written in C# using .NET Core 3.1.107.
+Written in C# using .NET Core 3.1.108.
 
 ## Compiling from source:
 

@@ -854,7 +854,7 @@ namespace FileFinder
                             }
                             break;
                     }
-                    Logger.LogToFile(2, $"$Copied {oldFilePath} to {newFilePath}", Logger.UrgencyLevel.Info);
+                    Logger.LogToFile(2, $"Copied {oldFilePath} to {newFilePath}", Logger.UrgencyLevel.Info);
                 }
                 catch (Exception excep)
                 {
