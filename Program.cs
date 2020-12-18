@@ -33,8 +33,31 @@ namespace FileFinder
 
             #endregion
             
+            //Cancel key handler
+            Console.CancelKeyPress += new ConsoleCancelEventHandler(appCancel);
+
+            #if DEBUG
+            Console.WriteLine("The app is being run in debug, updating is disabled");
+            #endif
+            
             //Call Init();
+            try {
             FileFinder.Init(ref args);
+            }
+            catch (Exception excep) {
+                //This could run if the error occurs inside the Init() method itself and outside the catch clause. If that happens, PANIC
+                //I want to make it a bit more dramatic :)
+                Console.Write($"---[ PANIC, INIT DIED\n");
+                Console.WriteLine($"LOCAL: {DateTime.Now}");
+                Console.WriteLine($"UTC: {DateTime.UtcNow}");
+                Console.WriteLine($"OS: {System.Environment.OSVersion}");
+                Console.WriteLine($"CPU COUNT: {System.Environment.ProcessorCount}t");
+                Console.WriteLine($"RUNTIME: v{System.Environment.Version}");
+                Console.WriteLine($"MEMUSAGE: {System.Environment.WorkingSet}B");
+                Console.WriteLine($"UP: {System.Environment.TickCount64}ms");
+                Console.Write($"{excep}\n");
+                Console.Write($"END PANIC, APP EXIT ]---\n");
+            }
 
             /* legacy code
             #region Program Setup
@@ -822,7 +845,7 @@ namespace FileFinder
         
         #region Program Methods
         
-        static void appCancel(object sender, ConsoleCancelEventArgs cancelEvents)
+        */static void appCancel(object sender, ConsoleCancelEventArgs cancelEvents)
         {
             Console.CursorVisible = true;
             Console.Clear();
@@ -832,7 +855,7 @@ namespace FileFinder
             {
                 try
                 {
-                    Logger.LogToFile($"{cancelEvents.SpecialKey} was recieved", logFile.Key, Logger.UrgencyLevel.Info);
+                    Logger.LogToFile(logFile.Key, $"{cancelEvents.SpecialKey} was recieved", Logger.UrgencyLevel.Info);
                     Logger.SaveLog(logFile.Key);    
                 }
                 catch (NullReferenceException)
@@ -847,7 +870,7 @@ namespace FileFinder
             Console.ResetColor();
             Console.WriteLine("Programm exit");
             return;
-        }
+        }/*
         
         static List<ReleaseData> GetReleases(string url)
         {

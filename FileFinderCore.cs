@@ -5,6 +5,7 @@ using System.Net;
 using System.Linq;
 using System.Threading;
 using System.Text.Json;
+using System.Reflection;
 using System.Diagnostics;
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
@@ -45,9 +46,17 @@ namespace FileFinder
             //Create log files
             if (!Directory.Exists(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + Path.DirectorySeparatorChar + "FileFinderData"))
                 Directory.CreateDirectory(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + Path.DirectorySeparatorChar + "FileFinderData");
+            #if !DEBUG
             Logger.CreateLog(0, LOGFILE_BASE_PATH + "Init.log");
             Logger.CreateLog(1, LOGFILE_BASE_PATH + "Updater.log");
             Logger.CreateLog(2, LOGFILE_BASE_PATH + "Runtime.log");
+            #else
+            Logger.CreateLog(0, "Init.log");
+            Logger.CreateLog(2, "Runtime.log");
+            #endif
+            Logger.LogToFile(0, $"OS: " + Environment.OSVersion + (Environment.Is64BitOperatingSystem ? "-64bit" : "-32bit"), Logger.UrgencyLevel.Info);
+            Logger.LogToFile(0, $"Thread count: {Environment.ProcessorCount} threads", Logger.UrgencyLevel.Info);
+            Logger.LogToFile(0, $"Uptime: {Environment.TickCount64} milliseconds", Logger.UrgencyLevel.Info);
             
             //Variables
             Logger.LogToFile(0, "Instantiated classes", Logger.UrgencyLevel.Success);
@@ -67,6 +76,7 @@ namespace FileFinder
                 }
                 
                 //Check for updates and install
+                #if !DEBUG
                 FFUpdater.DeleteTemp(ref InitData);
                 FFUpdater.FetchUpdates(ref InitData);
                 FFUpdater.UpdaterData.UpdateLevel = FFUpdater.CompareUpdates(APP_VERSION, FFUpdater.UpdaterData.Releases[0].ReleaseTag);
@@ -74,6 +84,7 @@ namespace FileFinder
                 {
                     FFUpdater.ShowUpdateMenu(ref InitData);
                 }
+                #endif
                 
                 //Proceed to the main part
                 FFMain.Settings(ref InitData);
@@ -86,14 +97,14 @@ namespace FileFinder
             {
                 //Write results to file
                 Logger.LogToFile(0, "A method requested an application exit", Logger.UrgencyLevel.Info);
-                if (excep.Message != null)
+                if (excep.Message != null && excep.Message.Length > 0)
                     Logger.LogToFile(0, "Message: " + excep.Message, Logger.UrgencyLevel.Info);
             }
             catch (Exception excep) {
                 //Write results to file
                 Logger.LogToFile(0, "A method threw an exception", Logger.UrgencyLevel.Critical);
                 Logger.LogToFile(0, $"Exception: {excep}", Logger.UrgencyLevel.Info);
-                Console.WriteLine("The app ran into an error. View logs for more details.");
+                Console.WriteLine($"The app ran into an error. View logs in {LOGFILE_BASE_PATH} for more details.");
             }
             
             //Save log files
@@ -154,10 +165,9 @@ namespace FileFinder
             }
             catch (Exception caughtException)
             {
-                Console.ForegroundColor = ConsoleColor.Red;
                 Logger.LogToFile(1, "Temp directory could not be deleted", Logger.UrgencyLevel.Critical);
                 Logger.LogToFile(1, "Exception: " + caughtException.Message, Logger.UrgencyLevel.Info);
-                Console.WriteLine($"Temp directory could not be deleted. Delete \"{FileFinder.TEMP_DIRECTORY_PATH + Path.DirectorySeparatorChar}FileFinderUpdater\" and try again. Check logs for more info.");
+                Console.WriteLine($"Temp directory could not be deleted. Delete \"{FileFinder.TEMP_DIRECTORY_PATH + Path.DirectorySeparatorChar}FileFinderUpdater\" and try again");
                 throw;
             }
         }
@@ -797,7 +807,7 @@ namespace FileFinder
                             if (File.Exists(newFilePath))
                             {
                                 //If the file exists, check if the source file is newer
-                                if (GetDate(oldFilePath) > GetDate(newFilePath))
+                                if (GetDate(oldFilePath, ref InitData) > GetDate(newFilePath, ref InitData))
                                 {
                                     //Delete the file if it exists
                                     File.Delete(newFilePath);
@@ -821,7 +831,7 @@ namespace FileFinder
                             if (File.Exists(newFilePath))
                             {
                                 //If the file exists, check if the source file is older
-                                if (GetDate(oldFilePath) < GetDate(newFilePath))
+                                if (GetDate(oldFilePath, ref InitData) < GetDate(newFilePath, ref InitData))
                                 {
                                     //Delete the file if it exists
                                     File.Delete(newFilePath);
@@ -858,9 +868,37 @@ namespace FileFinder
                 }
             }
 
-            DateTime GetDate(string filePath)
+            DateTime GetDate(string filePath, ref FFInitData InitData)
             {
-                return DateTime.UtcNow;
+                string FileDate;
+                try
+                {
+                    IEnumerable<MetadataExtractor.Directory> fileMetadata = MetadataExtractor.ImageMetadataReader.ReadMetadata(filePath);
+                    ExifSubIfdDirectory exifMetadata = fileMetadata?.OfType<ExifSubIfdDirectory>().FirstOrDefault();
+                    XmpDirectory xmpMetadata = fileMetadata?.OfType<XmpDirectory>().FirstOrDefault();
+                    
+                    FileDate = exifMetadata?.GetDescription(ExifDirectoryBase.TagDateTimeOriginal);
+                    if (FileDate == null)
+                    {
+                        xmpMetadata?.GetXmpProperties().TryGetValue("MetadataDate", out FileDate);
+                        if (FileDate == null)
+                        {
+                            //If all of the above fail, use the last write time as a reference
+                            FileDate = File.GetLastWriteTimeUtc(filePath).ToString();
+                            CoreData.UnsortedCount++;
+                        }
+                    }
+                }
+                catch (Exception caughtException)
+                {
+                    //If all of the above fail, use the last write time as a reference
+                    FileDate = File.GetLastWriteTimeUtc(filePath).ToString();
+                    Logger.LogToFile(2, $"{filePath} was sorted using the last write time", Logger.UrgencyLevel.Warn);
+                    CoreData.UnsortedCount++;
+                    InitData.CaughtExceptions.Add(caughtException);
+                }
+                DateTime.TryParse(FileDate, out DateTime Result);
+                return Result;
             }
             
             string GenerateFilename(string filePath)

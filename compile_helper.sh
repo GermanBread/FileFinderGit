@@ -46,7 +46,7 @@ done
 shopt -s expand_aliases
 
 #Alias "compile" to the command below to make the code look cleaner.
-alias compile="dotnet publish -p:PublishSingleFile=true -p:PublishTrimmed=true -o build --self-contained --nologo";
+alias compile="dotnet publish -p:PublishSingleFile=true -p:PublishTrimmed=true -p:PublishReadyToRun=true --configuration Release -o build --self-contained --nologo";
 
 #The user has sucessfully selected a runtime, now compile it.
 case $selection in
