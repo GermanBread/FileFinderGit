@@ -46,58 +46,58 @@ done
 shopt -s expand_aliases
 
 #Alias "compile" to the command below to make the code look cleaner.
-alias compile="dotnet publish -p:PublishSingleFile=true -p:PublishTrimmed=true -p:PublishReadyToRun=true --configuration Release -o build --self-contained --nologo";
+alias compile="dotnet publish -p:PublishSingleFile=true -p:PublishTrimmed=true --configuration Release -o build --self-contained --nologo"
 
 #The user has sucessfully selected a runtime, now compile it.
 case $selection in
     1)
-    printf "$(tput setaf 6)Publishing for Linux (x86-64)$(tput sgr0)\n";
-    compile -r linux-x64;
+    printf "$(tput setaf 6)Publishing for Linux (x86-64)$(tput sgr0)\n"
+    compile -r linux-x64 -p:PublishReadyToRun=true
     ;;
 
     2)
-    printf "$(tput setaf 6)Publishing for Linux (musl x86-64)$(tput sgr0)\n";
-    compile -r linux-musl-x64
+    printf "$(tput setaf 6)Publishing for Linux (musl x86-64)$(tput sgr0)\n"
+    compile -r linux-musl-x64 -p:PublishReadyToRun=true
     ;;
     
     3)
-    printf "$(tput setaf 6)Publishing for Linux (ARM-64)$(tput sgr0)\n";
-    compile -r linux-arm64;
+    printf "$(tput setaf 6)Publishing for Linux (ARM-64)$(tput sgr0)\n"
+    compile -r linux-arm64 -p:PublishReadyToRun=true
     ;;
 
     4)
-    printf "$(tput setaf 6)Publishing for Linux (ARM-32)$(tput sgr0)\n";
-    compile -r linux-arm;
+    printf "$(tput setaf 6)Publishing for Linux (ARM-32)$(tput sgr0)\n"
+    compile -r linux-arm -p:PublishReadyToRun=true
     ;;
     
     5)
-    printf "$(tput setaf 6)Publishing for Windows 10 (x86-64)$(tput sgr0)\n";
-    compile -r win-x64;
+    printf "$(tput setaf 6)Publishing for Windows 10 (x86-64)$(tput sgr0)\n"
+    compile -r win-x64
     ;;
 
     6)
-    printf "$(tput setaf 6)Publishing for Windows 10 (x86-32)$(tput sgr0)\n";
-    compile -r win-x86;
+    printf "$(tput setaf 6)Publishing for Windows 10 (x86-32)$(tput sgr0)\n"
+    compile -r win-x86
     ;;
 
     7)
-    printf "$(tput setaf 6)Publishing for Windows 10 (ARM-64)$(tput sgr0)\n";
-    compile -r win-arm64;
+    printf "$(tput setaf 6)Publishing for Windows 10 (ARM-64)$(tput sgr0)\n"
+    compile -r win-arm64
     ;;
 
     8)
-    printf "$(tput setaf 6)Publishing for Windows 10 (ARM 32)$(tput sgr0)\n";
-    compile -r win-arm;
+    printf "$(tput setaf 6)Publishing for Windows 10 (ARM 32)$(tput sgr0)\n"
+    compile -r win-arm
     ;;
 
     #This should only run if the user entered an invalid number...
     *)
-    printf "$(tput setaf 1)Invalid selection; Aborting.$(tput sgr0)\n";
+    printf "$(tput setaf 1)Invalid selection; Aborting.$(tput sgr0)\n"
     ;;
 esac
 
 #I put this unalias-command here just in case. Is this even necessary?
-unalias compile;
+unalias compile
 
 #remove debug files
 rm -f build/*.pdb
@@ -106,5 +106,5 @@ rm -f build/*.pdb
 mv -f build/FileFinder build/FileFinder.x86-64 2>/dev/null
 
 #exit
-printf "$(tput setaf 6)Script exit$(tput sgr0)\n";
+printf "$(tput setaf 6)Script exit$(tput sgr0)\n"
 exit;
