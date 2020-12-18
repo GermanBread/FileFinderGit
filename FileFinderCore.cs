@@ -462,10 +462,11 @@ namespace FileFinder
             //Since my older builds don't pass the executable's name alongside the path
             if (!File.Exists(InitData.ConsoleArgs[0]))
                 //The executable's name will be hard coded to ensure backwards-compatibility
-                AppPath = InitData.ConsoleArgs[0].Replace("─", " ") + "FileFinder" + FileFinder.APP_EXTENSION;
+                AppPath = InitData.ConsoleArgs[0].Replace("─", " ") + Path.DirectorySeparatorChar + "FileFinder" + FileFinder.APP_EXTENSION;
 
+            Logger.LogToFile(1, $"Deleted {AppPath}", Logger.UrgencyLevel.Info);
             File.Delete(AppPath);
-            Logger.LogToFile(1, "Deleted executable", Logger.UrgencyLevel.Info);
+            Logger.LogToFile(1, $"Copied {UpdaterData.UpdaterPath + Path.DirectorySeparatorChar + FileFinder.APP_NAME + FileFinder.APP_EXTENSION} to {AppPath}", Logger.UrgencyLevel.Info);
             File.Copy(UpdaterData.UpdaterPath + Path.DirectorySeparatorChar + FileFinder.APP_NAME + FileFinder.APP_EXTENSION, AppPath);
             Logger.LogToFile(1, "Copied new executable", Logger.UrgencyLevel.Info);
             Console.WriteLine("Update to version {0} completed sucessfully", FileFinder.APP_VERSION);
