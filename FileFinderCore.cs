@@ -96,6 +96,15 @@ namespace FileFinder
                 Logger.LogToFile(0, "A method requested an application exit", Logger.UrgencyLevel.Info);
                 if (excep.Message != null && excep.Message.Length > 0)
                     Logger.LogToFile(0, "Message: " + excep.Message, Logger.UrgencyLevel.Info);
+                
+                //Save log files
+                foreach (int key in Logger.LogFiles.Keys)
+                {
+                    Logger.SaveLog(key);
+                }
+                
+                //Return
+                return InitData;
             }
             catch (Panic excep) {
                 throw excep;

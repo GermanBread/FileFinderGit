@@ -56,6 +56,9 @@ namespace FileFinder
                 Console.WriteLine($"UP: {System.Environment.TickCount64}ms");
                 Console.Write($"{excep}\n");
                 Console.Write($"END PANIC, APP EXIT ] ---\n");
+
+                Console.WriteLine("Press any key to close");
+                Console.ReadKey();
             }
 
             static void AppCancel(object sender, ConsoleCancelEventArgs cancelEvents)
