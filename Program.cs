@@ -46,7 +46,7 @@ namespace FileFinder
             }
             catch (Exception excep) {
                 //This could run if the error occurs inside the Init() method itself and outside the catch clause. If that happens, PANIC
-                Console.Write($"---[ PANIC, INIT DIED\n");
+                Console.Write($"--- [ PANIC, INIT DIED\n");
                 Console.WriteLine($"LOCAL: {DateTime.Now}");
                 Console.WriteLine($"UTC: {DateTime.UtcNow}");
                 Console.WriteLine($"OS: {System.Environment.OSVersion}");
@@ -55,7 +55,7 @@ namespace FileFinder
                 Console.WriteLine($"MEMUSAGE: {System.Environment.WorkingSet}B");
                 Console.WriteLine($"UP: {System.Environment.TickCount64}ms");
                 Console.Write($"{excep}\n");
-                Console.Write($"END PANIC, APP EXIT ]---\n");
+                Console.Write($"END PANIC, APP EXIT ] ---\n");
             }
 
             static void AppCancel(object sender, ConsoleCancelEventArgs cancelEvents)

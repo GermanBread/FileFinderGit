@@ -121,6 +121,18 @@ namespace UserInterface
                             Console.Write("<Text field>");
                         }
                     }
+                    else if (settingsElement.StrValueLabels[0] == "$Format")
+                    {
+                        //if the variable is not empty, display it
+                        if (settingsElement.StrValueLabels[2].Length > 0)
+                        {
+                            Console.Write("<" + settingsElement.StrValueLabels[2].ToString() + ">");
+                        }
+                        else
+                        {
+                            Console.Write("<Text field>");
+                        }
+                    }
                     else if (settingsElement.StrValueLabels[0] == "$Path")
                     {
                         //if the variable is not empty, display it
@@ -206,6 +218,10 @@ namespace UserInterface
                         else if (CurrentSetting.StrValueLabels[0] == "$Input" && IsSettingInteractable)
                         {
                             CurrentSetting.StrValueLabels[1] = new Prompts().UserInput();
+                        }
+                        else if (CurrentSetting.StrValueLabels[0] == "$Format" && IsSettingInteractable)
+                        {
+                            CurrentSetting.StrValueLabels[2] = new Prompts().UserInput("Custom format", CurrentSetting.StrValueLabels[1] + "\nInput> ");
                         }
                         else if (CurrentSetting.StrValueLabels[0] == "$Path" && IsSettingInteractable)
                         {

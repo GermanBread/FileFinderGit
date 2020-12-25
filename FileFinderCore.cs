@@ -3,8 +3,10 @@ using System;
 using System.IO;
 using System.Net;
 using System.Linq;
+using System.Threading;
 using System.Text.Json;
 using System.Diagnostics;
+using System.Threading.Tasks;
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
 //Metadata Extractor
@@ -66,10 +68,8 @@ namespace FileFinder
             Console.CursorVisible = false;
 
             //Methods
-            try
-            {
-                if (IS_IN_TEMP)
-                {
+            try {
+                if (IS_IN_TEMP) {
                     FFUpdater.UpdateApp(ref InitData);
                 }
                 
@@ -78,8 +78,7 @@ namespace FileFinder
                 FFUpdater.DeleteTemp(ref InitData);
                 FFUpdater.FetchUpdates(ref InitData);
                 FFUpdater.UpdaterData.UpdateLevel = FFUpdater.CompareUpdates(APP_VERSION, FFUpdater.UpdaterData.Releases[0].ReleaseTag);
-                if (FFUpdater.UpdaterData.UpdateLevel > 0 || args.Contains("-u"))
-                {
+                if (FFUpdater.UpdaterData.UpdateLevel > 0 || args.Contains("-u")) {
                     FFUpdater.ShowUpdateMenu(ref InitData);
                 }
                 #endif
@@ -92,18 +91,24 @@ namespace FileFinder
                 FFMain.FinalizeResults(ref InitData);
                 Console.WriteLine("All operations completed successfully. Check the log files if needed");
             }
-            catch (QuitRequestedException excep)
-            {
+            catch (QuitRequestedException excep) {
                 //Write results to file
                 Logger.LogToFile(0, "A method requested an application exit", Logger.UrgencyLevel.Info);
                 if (excep.Message != null && excep.Message.Length > 0)
                     Logger.LogToFile(0, "Message: " + excep.Message, Logger.UrgencyLevel.Info);
             }
+            catch (Panic excep) {
+                throw excep;
+            }
             catch (Exception excep) {
                 //Write results to file
                 Logger.LogToFile(0, "A method threw an exception", Logger.UrgencyLevel.Critical);
                 Logger.LogToFile(0, $"Exception: {excep}", Logger.UrgencyLevel.Info);
+                #if !DEBUG
                 Console.WriteLine($"The app ran into an error. View logs in {LOGFILE_BASE_PATH} for more details.");
+                #else
+                Console.WriteLine($"Oh snap, something bad happened. Go check the logs!");
+                #endif
             }
             
             //Save log files
@@ -516,19 +521,24 @@ namespace FileFinder
         public FFCoreData CoreData = new FFCoreData { };
         public void LoadPreferences(ref FFInitData InitData)
         {
+            #if !DEBUG
+            string PrefsPath = FileFinder.PREFS_FILE_PATH;
+            #else
+            string PrefsPath = "Preferences.json";
+            #endif
             LoadPreferences:
-            if (File.Exists(FileFinder.PREFS_FILE_PATH))
+            if (File.Exists(PrefsPath))
             {
                 try
                 {
-                    string PreferencesJson = File.ReadAllText(FileFinder.PREFS_FILE_PATH);
+                    string PreferencesJson = File.ReadAllText(PrefsPath);
                     Preferences = JsonSerializer.Deserialize<FFPreferences>(PreferencesJson);
                     Logger.LogToFile(2, "Preferences have been set from preferences file", Logger.UrgencyLevel.Success);
                 }
                 catch (JsonException)
                 {
                     Logger.LogToFile(2, "Preferences file contains invalid Json", Logger.UrgencyLevel.Error);
-                    File.Delete(FileFinder.PREFS_FILE_PATH);
+                    File.Delete(PrefsPath);
                     Logger.LogToFile(2, "Deleted preferences file", Logger.UrgencyLevel.Success);
                     goto LoadPreferences;
                 }
@@ -538,7 +548,7 @@ namespace FileFinder
             }
             else
             {
-                FileStream PreferencesFileStream = File.Create(FileFinder.PREFS_FILE_PATH);
+                FileStream PreferencesFileStream = File.Create(PrefsPath);
                 PreferencesFileStream.Close();
                 PreferencesFileStream.Dispose();
                 Logger.LogToFile(2, "Preferences file was created", Logger.UrgencyLevel.Success);
@@ -546,16 +556,21 @@ namespace FileFinder
         }
         public void SavePreferences(ref FFInitData InitData)
         {
+            #if !DEBUG
+            string PrefsPath = FileFinder.PREFS_FILE_PATH;
+            #else
+            string PrefsPath = "Preferences.json";
+            #endif
             SavePreferences:
-            if (File.Exists(FileFinder.PREFS_FILE_PATH))
+            if (File.Exists(PrefsPath))
             {
                 string PreferencesJson = JsonSerializer.Serialize<FFPreferences>(Preferences);
-                File.WriteAllText(FileFinder.PREFS_FILE_PATH, PreferencesJson);
+                File.WriteAllText(PrefsPath, PreferencesJson);
                 Logger.LogToFile(2, "Preferences have been written to preferences file", Logger.UrgencyLevel.Success);
             }
             else
             {
-                FileStream PreferencesFileStream = File.Create(FileFinder.PREFS_FILE_PATH);
+                FileStream PreferencesFileStream = File.Create(PrefsPath);
                 PreferencesFileStream.Close();
                 PreferencesFileStream.Dispose();
                 Logger.LogToFile(2, "Preferences file has been created", Logger.UrgencyLevel.Success);
@@ -602,15 +617,7 @@ namespace FileFinder
                 );
             SettingsMenu.Settings.Add(
                 new SettingsEntry(
-                    "Should filenames be changed?", 
-                    SettingsEntry.InteractionType.selectableAndInteractable, 
-                    new List<string> { "No, do not change the name", "Add date only", "Add date and iterator" }, 
-                    Preferences.FileNameType
-                    )
-                );
-            SettingsMenu.Settings.Add(
-                new SettingsEntry(
-                    "Should files be sorted?", 
+                    "Should directories be created?", 
                     SettingsEntry.InteractionType.selectableAndInteractable, 
                     new List<string> { "No", "Yes" }, 
                     Preferences.SortingEnabled ? 1 : 0
@@ -629,21 +636,30 @@ namespace FileFinder
                     IntSelection = Math.Clamp(Preferences.MaxRecursionCount, 0, 100),
                     StrDescription = "How deep down should files be searched?"
                 });
-            /*SettingsMenu.Settings.Add(
-                new SettingsEntry(
-                    "Allow unsafe paths?", 
-                    SettingsEntry.InteractionType.selectableAndInteractable, 
-                    new List<string> { "No", "Yes" }, 
-                    Preferences.AllowUnsafePaths ? 1 : 0,
-                    "A path is considered unsafe when the app does not have write permissions to said path"
-                    )
-                );*/
             SettingsMenu.Settings.Add(
                 new SettingsEntry(
                     "Should duplicates be overwritten?", 
                     SettingsEntry.InteractionType.selectableAndInteractable, 
                     new List<string> { "No, always keep the duplicate", "Only overwrite if source file is newer", "Only overwrite if source file is older", "Yes, always overwrite the duplicate" }, 
                     (int)Preferences.CopyOption
+                    )
+                );
+            SettingsMenu.Settings.Add(
+                new SettingsEntry(
+                    "Custom file name format", 
+                    SettingsEntry.InteractionType.selectableAndInteractable, 
+                    new List<string> { "$Format", "Toc:\n%N = File name\n%Y = year\n%M = month\n%D = day\n%I = iterator value", "" }, 
+                    0,
+                    "Set a custom format for files"
+                    )
+                );
+            SettingsMenu.Settings.Add(
+                new SettingsEntry(
+                    "Custom directory name format", 
+                    SettingsEntry.InteractionType.selectableAndInteractable, 
+                    new List<string> { "$Format", "Toc:\n%Y = year\n%M = month\n%D = day", "" }, 
+                    0,
+                    "Set a custom format for directories"
                     )
                 );
             SettingsMenu.Settings.Add(
@@ -665,21 +681,22 @@ namespace FileFinder
             
             #endregion
 
+            //Set some values before going into a loop
+            SettingsMenu.Settings[6].StrValueLabels[2] = Preferences.FileFormat;
+            SettingsMenu.Settings[7].StrValueLabels[2] = Preferences.DirectoryFormat;
+            
             //Loop until the user presses "DONE"
             Logger.LogToFile(2, "Showing menu", Logger.UrgencyLevel.Info);
             while (!SettingsMenu.DrawSettings("FileFinder settings manager " + FileFinder.APP_VERSION)) { }
             
-            //Other variables
-            List<char> ValidIntParseChars = new List<char> { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' };
-
             //Variables that depend on the settings manager
             CoreData.SourcePath = SettingsMenu.Settings[0].StrValueLabels[1];
             CoreData.DestinationPath = SettingsMenu.Settings[1].StrValueLabels[1];
-            Preferences.FileNameType = SettingsMenu.Settings[3].IntSelection;
-            Preferences.SortingEnabled = SettingsMenu.Settings[4].IntSelection == 1;
-            Preferences.MaxRecursionCount = int.Parse(SettingsMenu.Settings[5].StrValueLabels[SettingsMenu.Settings[5].IntSelection]);
-            //Preferences.AllowUnsafePaths = SettingsMenu.Settings[6].IntSelection == 1;
-            Preferences.CopyOption = (FFPreferences.CopyMode)SettingsMenu.Settings[6].IntSelection;
+            Preferences.SortingEnabled = SettingsMenu.Settings[3].IntSelection == 1;
+            Preferences.MaxRecursionCount = int.Parse(SettingsMenu.Settings[4].StrValueLabels[SettingsMenu.Settings[4].IntSelection]);
+            Preferences.CopyOption = (FFPreferences.CopyMode)SettingsMenu.Settings[5].IntSelection;
+            Preferences.FileFormat = SettingsMenu.Settings[6].StrValueLabels[2].Length > 0 ? SettingsMenu.Settings[6].StrValueLabels[2] : "%F_%Y+%M+%D_%I";
+            Preferences.DirectoryFormat = SettingsMenu.Settings[7].StrValueLabels[2].Length > 0 ? SettingsMenu.Settings[7].StrValueLabels[2] : "%Y+%M+%D";
 
             //Save preferences
             SavePreferences(ref InitData);
@@ -689,17 +706,51 @@ namespace FileFinder
         /// </summary>
         public void FindFiles(ref FFInitData InitData)
         {
-            //Clear the console and notify the user
+            //Clear the console
             Console.Clear();
-            Console.WriteLine("Searching for files in {0}. This will take a while", CoreData.SourcePath);
+            
+            //Create the list where all file paths will be stored. It is created before the task so that it can be used to visualize them
+            List<string> UnfilteredFilePaths = new List<string> { };
+
+            //An animation
+            CancellationTokenSource TokenSource = new CancellationTokenSource();
+            Task PingPongAnimation = Task.Run(() => {
+                float i = 0;
+                Stopwatch SW = new Stopwatch();
+                SW.Start();
+                while (!TokenSource.IsCancellationRequested) {
+                    Console.SetCursorPosition(0, 0);
+                    Console.ForegroundColor = i % 2000 >= 1000 ? ConsoleColor.White : ConsoleColor.DarkGray;
+                    Console.BackgroundColor = i % 2000 < 1000 ? ConsoleColor.White : ConsoleColor.DarkGray;
+                    Console.WriteLine(BarGraph((int)Math.Round(i % 1000), 1000, Console.WindowWidth));
+                    Console.ResetColor();
+                    Console.WriteLine("Searching for directories in \"{0}\". This will take a while", CoreData.SourcePath);
+                    i += 5 * SW.ElapsedMilliseconds;
+                    SW.Restart();
+                }
+            }, TokenSource.Token);
+            //Now start the animation if it doesn't already run
+            if (PingPongAnimation.Status == TaskStatus.Created)
+                PingPongAnimation.Start();
             
             //Get a list of all files
-            List<string> UnfilteredFilePaths = GetAllDirectories(CoreData.SourcePath, 0);
+            UnfilteredFilePaths = GetAllDirectories(CoreData.SourcePath, 0);
+
+            //Cancel the animation
+            TokenSource.Cancel();
             
+            //Free up some memory
+            TokenSource.Dispose();
+            PingPongAnimation.Wait();
+            PingPongAnimation.Dispose();
+
+            //Clear the console again
+            Console.Clear();
+
             //Before continuing, remove every path that the user doesn't have permissions to
             for (int i = 0; i < UnfilteredFilePaths.Count; i++)
             {
-                Console.Clear();
+                Console.SetCursorPosition(0, 0);
                 Console.WriteLine("Retrieving files [{0} out of {1} directories processed]", i, UnfilteredFilePaths.Count - 1);
                 Console.WriteLine(BarGraph(i, UnfilteredFilePaths.Count - 1, Console.WindowWidth));
                 
@@ -942,12 +993,12 @@ namespace FileFinder
             /// <returns></returns>
             string GenerateFileName(string filePath, int iteratorValue, ref FFInitData InitData) {
                 DateTime FileDate = GetDate(filePath, ref InitData);
-                string output;
-                output = Path.GetFileNameWithoutExtension(filePath);
-                if (Preferences.FileNameType == 1)
-                    output += "_" + FileDate.Day + "+" + FileDate.Month + "+" + FileDate.Year;
-                else if (Preferences.FileNameType == 2)
-                    output += "_" + FileDate.Day + "+" + FileDate.Month + "+" + FileDate.Year + "_" + iteratorValue;
+                string output = Preferences.FileFormat;
+                output = output.Replace("%N", Path.GetFileNameWithoutExtension(filePath));
+                output = output.Replace("%Y", FileDate.Year.ToString());
+                output = output.Replace("%M", FileDate.Month.ToString());
+                output = output.Replace("%D", FileDate.Day.ToString());
+                output = output.Replace("%I", iteratorValue.ToString());
                 output += Path.GetExtension(filePath);
                 return output;
             }
@@ -960,9 +1011,10 @@ namespace FileFinder
             string GenerateDirectoryName(string filePath, ref FFInitData InitData)
             {
                 DateTime FileDate = GetDate(filePath, ref InitData);
-                string output = $"{CoreData.DestinationPath}";
-                if (Preferences.SortingEnabled)
-                    output += $"{Path.DirectorySeparatorChar}{FileDate.Year}_{FileDate.Month}_{FileDate.Day}";
+                string output = CoreData.DestinationPath + Path.DirectorySeparatorChar + Preferences.DirectoryFormat;
+                output = output.Replace("%Y", FileDate.Year.ToString());
+                output = output.Replace("%M", FileDate.Month.ToString());
+                output = output.Replace("%D", FileDate.Day.ToString());
                 return output;
             }
         }
@@ -988,10 +1040,10 @@ namespace FileFinder
         private string BarGraph(int value, int maxValue, int width)
         {
             string output = "";
-            string format = System.Environment.OSVersion.Platform == PlatformID.Win32NT ? "█" : "▏▎▍▌▋▊▉█";
+            string format = System.Environment.OSVersion.Platform == PlatformID.Win32NT ? "█" : " ▏▎▍▌▋▊▉█";
 
             float ratio = (float)value / (float)maxValue;
-            for (float i = 0; i < width * ratio; i++)
+            for (float i = 0; i < width; i++)
             {
                 output += format[(int)Math.Clamp(((ratio * format.Length) * width) - (i * format.Length), 0, format.Length - 1)];
             }
@@ -1064,16 +1116,17 @@ namespace FileFinder
     
     public class FFPreferences
     {
-        [JsonPropertyName("FileNameType")]
-        public int FileNameType { get; set; } = 2;
         [JsonPropertyName("SortingEnabled")]
         public bool SortingEnabled { get; set; } = true;
         [JsonPropertyName("OverwriteType")]
         public CopyMode CopyOption { get; set; } = CopyMode.OverwriteIfOlder;
         [JsonPropertyName("MaxRecursionCount")]
         public int MaxRecursionCount { get; set; } = 5;
-        [JsonPropertyName("UnsafePaths")]
-        public bool AllowUnsafePaths { get; set; } = false;
+        [JsonPropertyName("FileFormat")]
+        public string FileFormat { get; set; } = "%F_%Y+%M+%D_%I";
+        [JsonPropertyName("DirectoryFormat")]
+        public string DirectoryFormat { get; set; } = "%Y+%M+%D";
+
 
         public enum CopyMode
         {
@@ -1139,6 +1192,16 @@ namespace FileFinder
         public QuitRequestedException(string message) : base(message) { }
         public QuitRequestedException(string message, System.Exception inner) : base(message, inner) { }
         protected QuitRequestedException(
+            System.Runtime.Serialization.SerializationInfo info,
+            System.Runtime.Serialization.StreamingContext context) : base(info, context) { }
+    }
+    [Serializable]
+    public class Panic : Exception
+    {
+        public Panic() { }
+        public Panic(string message) : base(message) { }
+        public Panic(string message, System.Exception inner) : base(message, inner) { }
+        protected Panic(
             System.Runtime.Serialization.SerializationInfo info,
             System.Runtime.Serialization.StreamingContext context) : base(info, context) { }
     }
