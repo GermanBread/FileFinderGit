@@ -32,7 +32,7 @@ namespace FileFinder
         public static string APP_NAME = "FileFinder";
         public static string APP_EXTENSION = IS_UNIX ? ".x86-64" : ".exe";
         //Release definition
-        public static string APP_VERSION = "v3.0.0";
+        public static string APP_VERSION = "v3.1.0";
 
         #endregion
         
