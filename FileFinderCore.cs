@@ -89,7 +89,7 @@ namespace FileFinder
                 if (FFMain.CoreData.FilePaths.Count > 0)
                     FFMain.CopyFiles(ref InitData);
                 FFMain.FinalizeResults(ref InitData);
-                Console.WriteLine("All operations completed successfully. Check the log files if needed");
+                Console.WriteLine("All operations completed successfully. Check the log files in {0} if needed", FileFinder.LOGFILE_BASE_PATH);
             }
             catch (QuitRequestedException excep) {
                 //Write results to file
@@ -751,20 +751,20 @@ namespace FileFinder
             for (int i = 0; i < UnfilteredFilePaths.Count; i++)
             {
                 Console.SetCursorPosition(0, 0);
-                Console.WriteLine("Retrieving files [{0} out of {1} directories processed]", i, UnfilteredFilePaths.Count - 1);
-                Console.WriteLine(BarGraph(i, UnfilteredFilePaths.Count - 1, Console.WindowWidth));
+                Console.WriteLine("Retrieving files [{0} out of {1} directories processed]", i, UnfilteredFilePaths.Count);
+                Console.WriteLine(BarGraph(i + 1, UnfilteredFilePaths.Count, Console.WindowWidth));
                 
                 try
                 {
                     foreach (string file in Directory.GetFiles(UnfilteredFilePaths[i], "*", SearchOption.TopDirectoryOnly).Where(
-                        a => a.EndsWith(".mp4")
-                         || a.EndsWith(".mov")
-                          || a.EndsWith(".png")
-                           || a.EndsWith(".jpg")
-                            || a.EndsWith(".jpeg")
-                             || a.EndsWith(".img")
-                              || a.EndsWith(".avi")
-                               || a.EndsWith(".webm")))
+                        a => a.EndsWith(".mp4", true, null)
+                         || a.EndsWith(".mov", true, null)
+                          || a.EndsWith(".png", true, null)
+                           || a.EndsWith(".jpg", true, null)
+                            || a.EndsWith(".jpeg", true, null)
+                             || a.EndsWith(".img", true, null)
+                              || a.EndsWith(".avi", true, null)
+                               || a.EndsWith(".webm", true, null)))
                     {
                         CoreData.FilePaths.Add(file);
                     }
@@ -830,8 +830,8 @@ namespace FileFinder
             for (int i = 0; i < CoreData.FilePaths.Count; i++)
             {
                 Console.SetCursorPosition(0, 0);
-                Console.WriteLine("Copying [{0} out of {1} files copied]", i, CoreData.FilePaths.Count - 1);
-                Console.WriteLine(BarGraph(i, CoreData.FilePaths.Count - 1, Console.WindowWidth));
+                Console.WriteLine("Copying [{0} out of {1} files copied]", i + 1, CoreData.FilePaths.Count);
+                Console.WriteLine(BarGraph(i + 1, CoreData.FilePaths.Count, Console.WindowWidth));
 
                 //Generate new filenames
                 string newFileName = GenerateFileName(CoreData.FilePaths[i], i, ref InitData);
@@ -1011,7 +1011,7 @@ namespace FileFinder
             string GenerateDirectoryName(string filePath, ref FFInitData InitData)
             {
                 DateTime FileDate = GetDate(filePath, ref InitData);
-                string output = CoreData.DestinationPath + Path.DirectorySeparatorChar + Preferences.DirectoryFormat;
+                string output = CoreData.DestinationPath + Path.DirectorySeparatorChar + (Preferences.SortingEnabled ? Preferences.DirectoryFormat : "");
                 output = output.Replace("%Y", FileDate.Year.ToString());
                 output = output.Replace("%M", FileDate.Month.ToString());
                 output = output.Replace("%D", FileDate.Day.ToString());
