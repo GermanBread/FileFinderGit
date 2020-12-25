@@ -110,15 +110,19 @@ namespace FileFinder
                 Console.WriteLine($"Oh snap, something bad happened. Go check the logs!");
                 #endif
             }
-            
-            //Save log files
-            foreach (int key in Logger.LogFiles.Keys)
-            {
-                Logger.SaveLog(key);
+            finally {
+                //Save log files
+                foreach (int key in Logger.LogFiles.Keys)
+                {
+                    Logger.SaveLog(key);
+                }
+                
+                //The cursor was hidden, now show it again
+                Console.CursorVisible = false;
+
+                Console.WriteLine("Press any key to close");
+                Console.ReadKey();
             }
-            
-            //The cursor was hidden, now show it again
-            Console.CursorVisible = false;
 
             //Return
             return InitData;
