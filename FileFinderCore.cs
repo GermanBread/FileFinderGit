@@ -722,10 +722,10 @@ namespace FileFinder
                     Console.SetCursorPosition(0, 0);
                     Console.ForegroundColor = i % 2000 >= 1000 ? ConsoleColor.White : ConsoleColor.DarkGray;
                     Console.BackgroundColor = i % 2000 < 1000 ? ConsoleColor.White : ConsoleColor.DarkGray;
-                    Console.WriteLine(BarGraph((int)Math.Round(i % 1000), 1000, Console.WindowWidth));
+                    Console.WriteLine(BarGraph((int)Math.Round(i % 1001), 1000, Console.WindowWidth));
                     Console.ResetColor();
                     Console.WriteLine("Searching for directories in \"{0}\". This will take a while", CoreData.SourcePath);
-                    i += 5 * SW.ElapsedMilliseconds;
+                    i += 15 * SW.ElapsedMilliseconds;
                     SW.Restart();
                 }
             }, TokenSource.Token);
@@ -1040,7 +1040,7 @@ namespace FileFinder
         private string BarGraph(int value, int maxValue, int width)
         {
             string output = "";
-            string format = System.Environment.OSVersion.Platform == PlatformID.Win32NT ? "█" : " ▏▎▍▌▋▊▉█";
+            string format = System.Environment.OSVersion.Platform == PlatformID.Win32NT ? " █" : " ▏▎▍▌▋▊▉█";
 
             float ratio = (float)value / (float)maxValue;
             for (float i = 0; i < width; i++)
