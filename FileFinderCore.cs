@@ -107,7 +107,7 @@ namespace FileFinder
                 #if !DEBUG
                 Console.WriteLine($"The app ran into an error. View logs in {LOGFILE_BASE_PATH} for more details.");
                 #else
-                Console.WriteLine($"Oh snap, something bad happened. Go check the logs!");
+                Console.WriteLine($"Oh snap, something bad happened. Go check the logs in the projects's directory!");
                 #endif
             }
             finally {
@@ -736,6 +736,7 @@ namespace FileFinder
             
             //Get a list of all files
             UnfilteredFilePaths = GetAllDirectories(CoreData.SourcePath, 0);
+            UnfilteredFilePaths.Add(CoreData.SourcePath);
 
             //Cancel the animation
             TokenSource.Cancel();
