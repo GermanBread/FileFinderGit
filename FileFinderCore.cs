@@ -75,11 +75,16 @@ namespace FileFinder
                 
                 //Check for updates and install
                 #if !DEBUG
-                FFUpdater.DeleteTemp(ref InitData);
-                FFUpdater.FetchUpdates(ref InitData);
-                FFUpdater.UpdaterData.UpdateLevel = FFUpdater.CompareUpdates(APP_VERSION, FFUpdater.UpdaterData.Releases[0].ReleaseTag);
-                if (FFUpdater.UpdaterData.UpdateLevel > 0 || args.Contains("-u")) {
-                    FFUpdater.ShowUpdateMenu(ref InitData);
+                try {
+                    FFUpdater.DeleteTemp(ref InitData);
+                    FFUpdater.FetchUpdates(ref InitData);
+                    FFUpdater.UpdaterData.UpdateLevel = FFUpdater.CompareUpdates(APP_VERSION, FFUpdater.UpdaterData.Releases[0].ReleaseTag);
+                    if (FFUpdater.UpdaterData.UpdateLevel > 0 || args.Contains("-u")) {
+                        FFUpdater.ShowUpdateMenu(ref InitData);
+                    }
+                }
+                catch (WebException excep) {
+                    Logger.LogToFile(0, $"Webexception {excep} was caught");
                 }
                 #endif
                 
