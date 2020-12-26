@@ -84,7 +84,7 @@ namespace FileFinder
                     }
                 }
                 catch (WebException excep) {
-                    Logger.LogToFile(0, $"Webexception {excep} was caught");
+                    Logger.LogToFile(0, $"Webexception {excep} was caught", Logger.UrgencyLevel.Error);
                 }
                 #endif
                 
