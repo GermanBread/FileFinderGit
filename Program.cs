@@ -37,16 +37,16 @@ namespace FileFinder
             Console.CancelKeyPress += new ConsoleCancelEventHandler(AppCancel);
 
             #if DEBUG
-            Console.WriteLine("The app is being run in debug, updating is disabled");
+            Console.WriteLine("You're debugging. To prevent your project from breaking itself, the updater has been disabled");
             #endif
             
             //Call Init();
             try {
-                FileFinder.Init(ref args);
+                _ = FileFinder.Init(ref args);
             }
             catch (Exception excep) {
                 //This could run if the error occurs inside the Init() method itself and outside the catch clause. If that happens, PANIC
-                Console.Write($"--- [ PANIC, INIT DIED\n");
+                Console.Write($"---[ PANIC, INIT DIED\n");
                 Console.WriteLine($"LOCAL: {DateTime.Now}");
                 Console.WriteLine($"UTC: {DateTime.UtcNow}");
                 Console.WriteLine($"OS: {System.Environment.OSVersion}");
@@ -55,8 +55,21 @@ namespace FileFinder
                 Console.WriteLine($"MEMUSAGE: {System.Environment.WorkingSet}B");
                 Console.WriteLine($"UP: {System.Environment.TickCount64}ms");
                 Console.Write($"{excep}\n");
-                Console.Write($"END PANIC, APP EXIT ] ---\n");
+                Console.Write($"END PANIC, APP EXIT ]---\n");
 
+                #if DEBUG
+                Console.WriteLine();
+                Console.WriteLine("     (-_-)ゞ゛");
+                Console.WriteLine("     (・_・ヾ");
+                Console.WriteLine("    【・_・?】");
+                Console.WriteLine("Well, this is akward");
+                Console.WriteLine();
+                #endif
+
+                //Unhide the cursor
+                Console.CursorVisible = true;
+
+                //Pause until the user does something
                 Console.WriteLine("Press any key to close");
                 Console.ReadKey();
             }
