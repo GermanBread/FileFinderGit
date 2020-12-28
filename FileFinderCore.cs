@@ -69,12 +69,12 @@ namespace FileFinder
 
             //Methods
             try {
+                #if !DEBUG
                 if (IS_IN_TEMP) {
                     FFUpdater.UpdateApp(ref InitData);
                 }
                 
                 //Check for updates and install
-                #if !DEBUG
                 try {
                     FFUpdater.DeleteTemp(ref InitData);
                     FFUpdater.FetchUpdates(ref InitData);
@@ -94,25 +94,46 @@ namespace FileFinder
                 if (FFMain.CoreData.FilePaths.Count > 0)
                     FFMain.CopyFiles(ref InitData);
                 FFMain.FinalizeResults(ref InitData);
-                Console.WriteLine("All operations completed successfully. Check the log files in {0} if needed", FileFinder.LOGFILE_BASE_PATH);
+                Console.WriteLine("All operations completed successfully. Check the log files in \"{0}\" if needed", FileFinder.LOGFILE_BASE_PATH);
             }
-            catch (QuitRequestedException excep) {
+            catch (QuitException excep) {
+                #if DEBUG
+                Console.WriteLine("\\( •_•)_†\nForced exit");
+                #endif
                 //Write results to file
-                Logger.LogToFile(0, "A method requested an application exit", Logger.UrgencyLevel.Info);
+                Logger.LogToFile(0, $"{excep.TargetSite.Name} forced an exit", Logger.UrgencyLevel.Info);
                 if (excep.Message != null && excep.Message.Length > 0)
                     Logger.LogToFile(0, "Message: " + excep.Message, Logger.UrgencyLevel.Info);
             }
-            catch (Panic excep) {
+            catch (PanicException excep) {
                 throw excep;
             }
             catch (Exception excep) {
                 //Write results to file
-                Logger.LogToFile(0, "A method threw an exception", Logger.UrgencyLevel.Critical);
+                Logger.LogToFile(0, $"\"{excep.TargetSite.Name}\" caused the crash", Logger.UrgencyLevel.Critical);
                 Logger.LogToFile(0, $"Exception: {excep}", Logger.UrgencyLevel.Info);
                 #if !DEBUG
-                Console.WriteLine($"The app ran into an error. View logs in {LOGFILE_BASE_PATH} for more details.");
+                Console.WriteLine($"\"{excep.TargetSite.Name}\" caused the crash");
+                Console.WriteLine($"View logs in \"{LOGFILE_BASE_PATH}\" for more details.");
                 #else
-                Console.WriteLine($"Oh snap, something bad happened. Go check the logs in the projects's directory!");
+                //Sometimes the best way to fix errors is if the app insults you each time
+                List<string> Insults = new List<string> {
+                    $"{excep.TargetSite.Name} caused the crash. Are you just incompetent?",
+                    $"{excep.TargetSite.Name} caused the crash. Use your braincells? Maybe?",
+                    $"{excep.TargetSite.Name} caused the crash. 11/10 chance it's your fault",
+                    $"{excep.TargetSite.Name} caused the crash. My pets can write better code.",
+                    $"{excep.TargetSite.Name} caused the crash. Try Stackoverflow? Oh wait, you can't",
+                    $"{excep.TargetSite.Name} caused the crash. Did you follow some random C# 1.0 guide?",
+                    $"{excep.TargetSite.Name} caused the crash.\n     _.-^^---....,,--       \n _--                  --_   \n<         Boom!          >) \n|  Congratulations, you   | \n \\._   made it crash    _./  \n    ```--. . , ; .--'''     \n          | |   |           \n       .-=||  | |=-.        \n       '-=#$%&%$#=-'        \n          | ;  :|           \n_____.,-#%&$@%#&#~,._____",
+                    $"{excep.TargetSite.Name} caused the crash. Are you proud of what you did?",
+                    $"{excep.TargetSite.Name} caused the crash.\n(・_・ヾ\n>Ok",
+                    $"{excep.TargetSite.Name} caused the crash. Now this is an achievement!",
+                    $"{excep.TargetSite.Name} caused the crash. May I ask how?",
+                    $"(　-_･) ︻デ═一                         {excep.TargetSite.Name}\n>There you are.",
+                    $"┐(￣ー￣)┌\n>Will fix later"
+                };
+                Console.WriteLine(Insults[new Random().Next(0, Insults.Count)]);
+                Console.WriteLine("Check the logs in the project's directory");
                 #endif
             }
             finally {
@@ -123,7 +144,7 @@ namespace FileFinder
                 }
                 
                 //The cursor was hidden, now show it again
-                Console.CursorVisible = false;
+                Console.CursorVisible = true;
             }
 
             //Return
@@ -295,7 +316,7 @@ namespace FileFinder
             Logger.LogToFile(1, "Starting updater", Logger.UrgencyLevel.Info);
             Process.Start(startInfo);
             
-            throw new QuitRequestedException("Updater started");
+            throw new QuitException("Updater started");
         }
         /// <summary>
         /// This method compares app versions with eachanother
@@ -482,7 +503,7 @@ namespace FileFinder
             Logger.LogToFile(1, "Copied new executable", Logger.UrgencyLevel.Info);
             Console.WriteLine("Update to version {0} completed sucessfully", FileFinder.APP_VERSION);
 
-            throw new QuitRequestedException("Update complete");
+            throw new QuitException("Update complete");
         }
 
         /// <summary>
@@ -758,7 +779,7 @@ namespace FileFinder
             for (int i = 0; i < UnfilteredFilePaths.Count; i++)
             {
                 Console.SetCursorPosition(0, 0);
-                Console.WriteLine("Retrieving files [{0} out of {1} directories processed]", i, UnfilteredFilePaths.Count);
+                Console.WriteLine("Retrieving files [{0} out of {1} directories processed]", i + 1, UnfilteredFilePaths.Count);
                 Console.WriteLine(BarGraph(i + 1, UnfilteredFilePaths.Count, Console.WindowWidth));
                 
                 try
@@ -1192,23 +1213,29 @@ namespace FileFinder
 
     #region Exceptions
 
+    /// <summary>
+    /// Throw this exception if you want to force a silent app-exit
+    /// </summary>
     [Serializable]
-    public class QuitRequestedException : Exception
+    public class QuitException : Exception
     {
-        public QuitRequestedException() { }
-        public QuitRequestedException(string message) : base(message) { }
-        public QuitRequestedException(string message, System.Exception inner) : base(message, inner) { }
-        protected QuitRequestedException(
+        public QuitException() { }
+        public QuitException(string message) : base(message) { }
+        public QuitException(string message, System.Exception inner) : base(message, inner) { }
+        protected QuitException(
             System.Runtime.Serialization.SerializationInfo info,
             System.Runtime.Serialization.StreamingContext context) : base(info, context) { }
     }
+    /// <summary>
+    /// Throw only under VERY SPECIAL circumstances where you want to notify the user about that VERY SPECIAL thing
+    /// </summary>
     [Serializable]
-    public class Panic : Exception
+    public class PanicException : Exception
     {
-        public Panic() { }
-        public Panic(string message) : base(message) { }
-        public Panic(string message, System.Exception inner) : base(message, inner) { }
-        protected Panic(
+        public PanicException() { }
+        public PanicException(string message) : base(message) { }
+        public PanicException(string message, System.Exception inner) : base(message, inner) { }
+        protected PanicException(
             System.Runtime.Serialization.SerializationInfo info,
             System.Runtime.Serialization.StreamingContext context) : base(info, context) { }
     }
