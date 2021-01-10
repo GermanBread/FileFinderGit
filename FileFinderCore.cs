@@ -136,16 +136,15 @@ namespace FileFinder
                 Console.WriteLine("Check the logs in the project's directory");
                 #endif
             }
-            finally {
-                //Save log files
-                foreach (int key in Logger.LogFiles.Keys)
-                {
-                    Logger.SaveLog(key);
-                }
-                
-                //The cursor was hidden, now show it again
-                Console.CursorVisible = true;
+            
+            //Save log files
+            foreach (int key in Logger.LogFiles.Keys)
+            {
+                Logger.SaveLog(key);
             }
+            
+            //The cursor was hidden, now show it again
+            Console.CursorVisible = true;
 
             //Return
             return InitData;
