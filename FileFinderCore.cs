@@ -32,7 +32,7 @@ namespace FileFinder
         public static string APP_NAME = "FileFinder";
         public static string APP_EXTENSION = IS_UNIX ? ".x86-64" : ".exe";
         //Release definition
-        public static string APP_VERSION = "v3.1.0";
+        public static string APP_VERSION = "v3.2.0";
 
         #endregion
         
@@ -304,17 +304,19 @@ namespace FileFinder
             ProcessStartInfo startInfo = new ProcessStartInfo();
             startInfo.FileName = UpdaterData.UpdaterPath + Path.DirectorySeparatorChar + UpdaterData.UpdaterFileName;
             //This is scuffed, but it'll do
+            // .NET 5 made AppContext.BaseDirectory return a path that makes sense, woohoo!
             if (CompareUpdates(FileFinder.APP_VERSION, "v2.1.0") >= 0)
                 //New update method
-                startInfo.Arguments = Directory.GetCurrentDirectory() + FileFinder.APP_NAME + FileFinder.APP_EXTENSION;
+                startInfo.Arguments = AppContext.BaseDirectory + FileFinder.APP_NAME + FileFinder.APP_EXTENSION;
             else
-                //For legacy reasons, will be stripped out sooner or later
-                startInfo.Arguments = Directory.GetCurrentDirectory().Replace(" ", "─");
+                //For legacy reasons, will be removed sooner or later
+                startInfo.Arguments = AppContext.BaseDirectory.Replace(" ", "─");
             startInfo.WorkingDirectory = UpdaterData.UpdaterPath;
             startInfo.CreateNoWindow = false;
             Logger.LogToFile(1, "Starting updater", Logger.UrgencyLevel.Info);
             Process.Start(startInfo);
             
+            // We want to quit the main app ASAP
             throw new QuitException("Updater started");
         }
         /// <summary>
@@ -1086,6 +1088,7 @@ namespace FileFinder
         {
             LogFiles.Add(ID, new StreamWriter(SourcePath));
             LogFiles.TryGetValue(ID, out StreamWriter writer);
+            writer.AutoFlush = true;
             writer.WriteLine($"Log file created with ID {ID}");
             writer.WriteLine($"Local time is {DateTime.Now}");
         }
